@@ -1,368 +1,915 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 
-export default function PublicEnquiryPage() {
+const initialFormData = {
+  name: "",
+  phone: "",
+  email: "",
+  trip_id: "",
+  group_type: "solo",
+  preferred_month: "",
+  note: "",
+};
+
+// const fieldClass =
+//   "w-full rounded-2xl border border-[#D1B788]/75 bg-[#FFFBF5] px-4 py-3.5 text-[15px] font-semibold text-[#1C1B1A] outline-none transition placeholder:text-[#1C1B1A]/38 focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/10";
+
+// const labelClass = "mb-2 block text-sm font-medium text-[#1C1B1A]";
+
+const labelClass =
+  "block text-[11px] font-semibold tracking-[0.12em] uppercase text-[#1C1B1A]/50 mb-1.5 font-poppins";
+const fieldClass =
+  "w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5]/90 px-4 py-3 text-sm font-light text-[#1C1B1A] placeholder-[#1C1B1A]/30 transition-all duration-300 focus:border-[#D55D27] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#D55D27]/5 font-poppins shadow-[inset_0_1px_2px_rgba(0,0,0,0.01)]";
+
+const groupOptions = [
+  { value: "solo", label: "Solo" },
+  { value: "friends", label: "Friends" },
+  { value: "couple", label: "Couple" },
+  { value: "family", label: "Family" },
+];
+
+function getTripTitle(trip) {
+  return trip?.title || trip?.name || "Nomichi Journey";
+}
+
+function getTripLocation(trip) {
+  return trip?.location || trip?.destination || "Curated route";
+}
+
+function formatTripDates(trip) {
+  const startValue = trip?.start_date || trip?.startDate || trip?.date_start;
+  const endValue = trip?.end_date || trip?.endDate || trip?.date_end;
+
+  if (startValue === undefined || startValue === null || startValue === "") {
+    return "Dates shared after curation";
+  }
+
+  const start = new Date(startValue);
+  const end = endValue ? new Date(endValue) : null;
+
+  if (Number.isNaN(start.getTime())) {
+    return String(startValue);
+  }
+
+  const dateOptions = { day: "numeric", month: "short", year: "numeric" };
+  const startText = start.toLocaleDateString("en-IN", dateOptions);
+
+  if (end === null || Number.isNaN(end.getTime())) {
+    return startText;
+  }
+
+  return `${startText} - ${end.toLocaleDateString("en-IN", dateOptions)}`;
+}
+
+function formatTripPrice(price) {
+  const numericPrice = Number(price);
+
+  if (Number.isNaN(numericPrice)) {
+    return "Price on request";
+  }
+
+  return `\u20B9${numericPrice.toLocaleString("en-IN")} incl. GST`;
+}
+
+export default function PublicLeadCapturePage() {
   const [trips, setTrips] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [tripsLoading, setTripsLoading] = useState(true);
+  const [tripsError, setTripsError] = useState("");
+  const [formData, setFormData] = useState(initialFormData);
+  const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [showNavShadow, setShowNavShadow] = useState(true);
+  const [openDropdown, setOpenDropdown] = useState(null);
 
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    trip_id: '',
-    group_type: 'solo',
-    preferred_month: '',
-    note: ''
-  });
-
-  const formRef = useRef(null);
-  const tripsSectionRef = useRef(null);
-
-  const scrollToSection = (elementRef) => {
-    elementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  const journeysRef = useRef(null);
+  const enquiryRef = useRef(null);
 
   useEffect(() => {
-    async function fetchOpenTrips() {
-      try {
-        const response = await fetch('/api/trips?status=open');
-        const json = await response.json();
-        if (json.data) {
-          setTrips(json.data);
-          if (json.data.length > 0) {
-            setFormData(prev => ({ ...prev, trip_id: json.data[0].id }));
-          }
-        }
-      } catch (err) {
-        setErrorMsg('Could not load current journeys. Please refresh the page.');
-      } finally {
-        setLoading(false);
-      }
+    function handleScroll() {
+      setShowNavShadow(window.scrollY === 0);
     }
-    fetchOpenTrips();
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const openTrips = useMemo(() => {
+    return trips.filter(
+      (trip) => String(trip.status || "open").toLowerCase() === "open",
+    );
+  }, [trips]);
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMsg('');
+  const selectedTrip = openTrips.find(
+    (trip) => String(trip.id) === String(formData.trip_id),
+  );
+  const selectedTripLabel = selectedTrip
+    ? getTripTitle(selectedTrip)
+    : "Not sure yet";
+  const selectedGroupLabel =
+    groupOptions.find((option) => option.value === formData.group_type)
+      ?.label || "Solo";
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTrips() {
+      setTripsLoading(true);
+      setTripsError("");
+
+      try {
+        const response = await fetch("/api/trips", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        const payload = await response.json();
+
+        if (response.ok === false) {
+          throw new Error(
+            payload.error || "We could not load journeys right now.",
+          );
+        }
+
+        const fetchedTrips = Array.isArray(payload.data) ? payload.data : [];
+        const firstOpenTrip = fetchedTrips.find(
+          (trip) => String(trip.status || "open").toLowerCase() === "open",
+        );
+
+        if (active === true) {
+          setTrips(fetchedTrips);
+          setFormData((current) => ({
+            ...current,
+            trip_id: current.trip_id || firstOpenTrip?.id || "",
+          }));
+        }
+      } catch (error) {
+        if (active === true) {
+          setTripsError(
+            error.message || "We could not load journeys right now.",
+          );
+        }
+      } finally {
+        if (active === true) {
+          setTripsLoading(false);
+        }
+      }
+    }
+
+    loadTrips();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function scrollTo(ref) {
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function handleInputChange(event) {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+  }
+
+  function selectJourney(tripId) {
+    setFormData((current) => ({ ...current, trip_id: tripId }));
+    scrollTo(enquiryRef);
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setFormError("");
     setSubmitting(true);
 
-    if (!formData.name.trim() || !formData.phone.trim()) {
-      setErrorMsg('Please fill in your name and phone number.');
+    const cleanPhone = formData.phone.replace(/[^0-9]/g, "");
+
+    if (formData.name.trim() === "" || cleanPhone.length < 10) {
+      setFormError("Please share your name and a valid phone number.");
       setSubmitting(false);
       return;
     }
 
-    const cleanPhone = formData.phone.replace(/[^0-9]/g, '');
-    if (cleanPhone.length < 10) {
-      setErrorMsg('Please enter a valid phone number.');
-      setSubmitting(false);
-      return;
-    }
+    const payload = {
+      ...formData,
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim() || `guest-${cleanPhone}@nomichi.invalid`,
+      trip_id: formData.trip_id || null,
+      preferred_month: formData.preferred_month.trim(),
+      note: formData.note.trim(),
+    };
 
     try {
-      const response = await fetch('/api/enquiries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      const response = await fetch("/api/enquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+      const result = await response.json();
 
-      if (!response.ok) {
-        const errJson = await response.json();
-        throw new Error(errJson.error || 'Failed to send your enquiry.');
+      if (response.ok === false) {
+        throw new Error(
+          result.error || "We could not send your enquiry. Please try again.",
+        );
       }
 
       setSuccess(true);
-    } catch (err) {
-      setErrorMsg(err.message || 'Something went wrong. Please check your connection.');
+      setFormData(initialFormData);
+    } catch (error) {
+      setFormError(
+        error.message || "We could not send your enquiry. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#FFFBF5] text-[#1C1B1A] flex items-center justify-center font-sans">
-        <p className="text-sm tracking-widest uppercase opacity-60">Loading Nomichi Journeys</p>
-      </div>
-    );
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5] text-[#1C1B1A] font-sans antialiased relative overflow-x-hidden">
-      
-      {/* Navbar Section */}
-      <nav className="max-w-7xl mx-auto px-6 sm:px-12 h-24 flex items-center justify-between relative z-20">
-        <span className="text-xl font-bold tracking-[0.25em] text-[#1C1B1A]">NOMICHI</span>
-        
-        <div className="flex items-center gap-8">
-          <button 
-            onClick={() => window.location.href = '/admin'}
-            className="text-xs font-semibold uppercase tracking-widest text-[#1C1B1A]/60 hover:text-[#1C1B1A] transition-colors"
+    <main
+      className="min-h-screen overflow-x-hidden bg-[#FFFBF5] text-[#1C1B1A]"
+      style={{ fontFamily: '"Poppins", sans-serif' }}
+    >
+      {/* Navigation */}
+      <nav className="relative z-50 bg-[#FFFBF5]">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-10 lg:px-12">
+          <Link
+            href="/"
+            className="group inline-flex items-center gap-1 text-2xl font-light tracking-[0.22em] text-[#1C1B1A]"
           >
-            Admin Dashboard
-          </button>
-          <button 
-            onClick={() => scrollToSection(formRef)}
-            className="text-xs font-semibold uppercase tracking-widest border border-[#1C1B1A] px-6 py-3 rounded-xl hover:bg-[#1C1B1A] hover:text-[#FFFBF5] transition-all duration-300"
-          >
-            Enquire Now
-          </button>
+            <span>NOMICHI</span>
+            <span
+              className="mt-1 h-2.5 w-2.5 rounded-full bg-[#D55D27]"
+              aria-hidden="true"
+            />
+          </Link>
+
+          <div className="flex items-center gap-4 sm:gap-8">
+            <Link
+              href="/admin"
+              className="hidden text-[13px] font-medium tracking-[0.08em] text-[#1C1B1A] transition hover:text-[#D55D27] sm:inline-flex"
+            >
+              Admin Dashboard
+            </Link>
+            <button
+              type="button"
+              onClick={() => scrollTo(enquiryRef)}
+              className="rounded-md border border-[#D55D27] px-5 py-2.5 text-[13px] font-semibold tracking-[0.06em] text-[#D55D27] transition hover:border-[#D55D27] hover:bg-[#D55D27] hover:text-[#FFFBF5] sm:px-7"
+            >
+              Enquire Now
+            </button>
+          </div>
         </div>
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[#D1B788]/45 transition-opacity duration-300 ${
+            showNavShadow ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-0 top-full h-8 bg-gradient-to-b from-[#D1B788]/18 to-transparent transition-opacity duration-300 ${
+            showNavShadow ? "opacity-100" : "opacity-0"
+          }`}
+        />
       </nav>
 
       {/* Hero Section */}
-      <header className="max-w-7xl mx-auto px-6 sm:px-12 pt-4 pb-16 md:py-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          
-          {/* Left Column */}
-          <div className="lg:col-span-6 space-y-4 md:space-y-6 text-left z-10">
-            <h5 className="text-xs md:text-sm font-bold uppercase tracking-[0.25em] text-[#D55D27]">
-              BEST DESTINATIONS AROUND THE WORLD
-            </h5>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-[#1C1B1A] leading-[1.15]">
-             Travel, enjoy and live a new and full life
-            </h1>
-            <p className="text-base md:text-lg text-[#1C1B1A]/70 leading-relaxed max-w-xl font-light">
-              Built Wicket longer admire do barton vanity itself do in it. Preferred to sportsmen it engrossed listening. Park gate sell they west hard for the.
+      <section className="relative mx-auto max-w-7xl px-6 pt-10 pb-14 sm:px-10 md:pt-14 lg:px-12">
+        <div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12 lg:gap-16">
+          <div className="relative z-20 flex w-full max-w-[540px] flex-col justify-center py-6 lg:col-span-6">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#D55D27]">
+              CRAFTING MEANINGFUL JOURNEYS FOR THE THOUGHTFUL TRAVELER
             </p>
 
-            {/* <div className="flex items-center gap-6 pt-2">
-              <button 
-                onClick={() => scrollToSection(formRef)}
-                className="bg-[#D55D27] hover:bg-[#1C1B1A] text-white font-semibold text-sm px-8 py-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+            <h1 className="text-4xl font-light leading-[1.2] tracking-tight text-[#1C1B1A] sm:text-5xl md:text-[54px] lg:text-6xl">
+              Stop just moving. <br />
+              <span className="text-[#D55D27] font-medium">
+                Start belonging
+              </span>{" "}
+              <br />
+              to the world.
+            </h1>
+
+            <p className="mt-6 max-w-[460px] text-sm font-light leading-7 text-[#1C1B1A]/70">
+              Experience travel the way it was meant to be, intentional,
+              immersive, and deeply personal. With{" "}
+              <span className="font-medium text-[#1C1B1A]">Nomichi</span>, step
+              into hand-picked heritage stays and curated trails led by local
+              hosts. We design journeys that stay with you long after you return
+              home.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => scrollTo(enquiryRef)}
+                className="rounded-xl bg-[#D55D27] px-8 py-4 text-sm font-semibold text-[#FFFBF5] shadow-[0_18px_34px_rgba(213,93,39,0.22)] transition hover:bg-[#1C1B1A]"
               >
                 Send an Enquiry
               </button>
-              <button 
-                onClick={() => scrollToSection(tripsSectionRef)}
-                className="text-sm font-bold tracking-wide text-[#1C1B1A] hover:text-[#D55D27] transition-colors"
+
+              <button
+                type="button"
+                onClick={() => scrollTo(journeysRef)}
+                className="group inline-flex items-center gap-3 px-2 py-3 text-sm font-semibold text-[#1C1B1A] transition hover:text-[#D55D27]"
               >
-                View Open Trips
-              </button>
-            </div> */}
-            <div className="flex items-center gap-6 pt-2">
-              <button 
-                onClick={() => scrollToSection(formRef)}
-                className="bg-[#D55D27] hover:bg-[#1C1B1A] text-white font-semibold text-sm px-8 py-4 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
-              >
-                Send an Enquiry
-              </button>
-              <button 
-                onClick={() => scrollToSection(tripsSectionRef)}
-                className="flex items-center gap-3 text-sm font-bold tracking-wide text-[#1C1B1A] group"
-              >
-                <span className="w-10 h-10 rounded-full bg-[#D55D27]/10 flex items-center justify-center text-[#D55D27] group-hover:bg-[#D55D27] group-hover:text-white transition-all duration-300">
-                  <svg className="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#D55D27]/10 text-[#D55D27] transition-all duration-300 group-hover:bg-[#D55D27] group-hover:text-white">
+                  <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#D55D27] transition-colors duration-300 group-hover:border-l-white" />
                 </span>
-                <span className="group-hover:text-[#D55D27] transition-colors">View Open Trips</span>
+                <span className="font-semibold">View Open Trips</span>
               </button>
             </div>
           </div>
 
+          <div className="relative flex min-h-[460px] lg:min-h-[500px] w-full items-stretch justify-center lg:col-span-6 overflow-visible">
+            <div className="pointer-events-none absolute inset-0 z-0 rounded-tl-[72px] rounded-tr-[138px] rounded-br-[32px] rounded-bl-[72px] bg-[#F4EFE6]" />
 
-          {/* Right Column Layout Frame - Image Expanded to Match Jadoo Structure */}
-          <div className="lg:col-span-6 relative w-full h-[500px] md:h-[600px] flex items-end justify-center">
-            {/* Organic soft backdrop asset alignment base shape */}
-            <div className="absolute inset-0 top-12 bottom-0 bg-[#F4EFE6] rounded-[50px_120px_40px_140px] transform rotate-1 opacity-90 pointer-events-none z-0" />
-            
-            {/* Expanded asset block alignment framework scaling up naturally and baseline-aligned */}
-            <img 
-              src="/hero-traveler.png" 
-              alt="Nomichi Traveler" 
-              className="absolute bottom-0 h-[135%] min-h-[500px] md:min-h-[650px] object-contain  object-bottom max-w-full drop-shadow-xl z-20 pointer-events-none select-none transition-all hover:-translate-y-4"
-
-              //  h-[135%] min-h-[500px] md:min-h-[650px]  object-bottom drop-shadow-2xl z-20 transition-all 
-            />
+            <div className="pointer-events-none absolute -bottom-[15px] z-20 h-[135%] md:h-[145%] w-[120%] select-none">
+              <Image
+                src="/hero-traveler.png"
+                alt="Nomichi Traveler"
+                fill
+                priority // High priority loading for LCP element
+                sizes="(max-w-lg) 100vw, 50vw"
+                className="object-contain object-bottom select-none drop-shadow-2xl"
+              />
+            </div>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* Open Trips List Section */}
-      <section ref={tripsSectionRef} className="max-w-7xl mx-auto px-6 sm:px-12 py-16 scroll-mt-24 space-y-8">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-[#45471D] border-b border-[#1C1B1A]/10 pb-3">
-          Open Journeys
-        </h2>
-        
-        {trips.length === 0 ? (
-          <p className="text-sm text-[#45471D] italic">
-            New journeys coming soon. Tell us where you want to go below.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-            {trips.map(trip => (
-              <article 
-                key={trip.id} 
-                onClick={() => {
-                  setFormData(prev => ({ ...prev, trip_id: trip.id }));
-                  scrollToSection(formRef);
-                }}
-                className={`group p-8 bg-white rounded-xl border transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-6 ${
-                  formData.trip_id === trip.id 
-                    ? 'border-[#D55D27] ring-1 ring-[#D55D27]' 
-                    : 'border-[#D1B788]/30 hover:border-[#D1B788]'
-                }`}
+      {/* Features Section */}
+      <section className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-12">
+        <div className="rounded-[40px] bg-[#F4EFE6] p-8 sm:p-12 lg:p-16">
+          <div className="grid gap-12 md:grid-cols-3 md:gap-8 lg:gap-12">
+            {[
+              [
+                "01",
+                "Not a checklist, an emotion",
+                "We swap rushed tourist traps for slower mornings, hidden local alleys, and days that let you actually breathe and absorb the destination.",
+              ],
+              [
+                "02",
+                "Scouted by real feet",
+                "Every homestay, secret viewpoint, and native host is personally vetted by us. No algorithmic recommendations—just pure, lived experiences.",
+              ],
+              [
+                "03",
+                "With you, all the way",
+                "We don’t just book tickets and disappear. From managing unexpected detours to finding a midnight local tea stall, our team is on the ground with you.",
+              ],
+            ].map(([number, title, copy]) => (
+              <article
+                key={title}
+                className="group relative flex flex-col pt-8"
               >
-                <div className="space-y-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#45471D]">{trip.destination}</span>
-                  <h3 className="font-bold text-xl tracking-tight text-[#1C1B1A]">{trip.name}</h3>
-                  <p className="text-sm text-[#1C1B1A]/70 leading-relaxed font-light">{trip.description}</p>
+                <div className="absolute top-0 left-0 h-[1px] w-12 bg-[#D55D27]/40 transition-all duration-500 group-hover:w-full group-hover:bg-[#D55D27]" />
+                <div className="flex items-baseline justify-between gap-2">
+                  <h2 className="text-lg font-medium tracking-tight text-[#1C1B1A] sm:text-xl">
+                    {title}
+                  </h2>
+                  <span className="text-2xl font-light italic text-[#D55D27]/30 transition-colors duration-300 group-hover:text-[#D55D27]/80">
+                    {number}
+                  </span>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-[#1C1B1A]/5 text-xs text-[#45471D] font-semibold">
-                  <span>{new Date(trip.start_date).toLocaleDateString('en-IN', {month: 'long', year: 'numeric'})}</span>
-                  <span className="text-[#1C1B1A] font-bold">₹{Number(trip.price).toLocaleString('en-IN')} incl. GST</span>
-                </div>
+                <p className="mt-4 text-[14px] leading-7 font-light text-[#1C1B1A]/70 antialiased">
+                  {copy}
+                </p>
               </article>
             ))}
           </div>
-        )}
+        </div>
       </section>
 
-      {/* Enquiry Form Section */}
-      <section ref={formRef} className="max-w-2xl mx-auto px-6 py-16 scroll-mt-24">
-        <div className="bg-white rounded-2xl border border-[#D1B788]/30 p-8 md:p-12 shadow-sm space-y-8">
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold tracking-tight">Plan a Journey</h2>
-            <p className="text-xs text-[#45471D]">Share your preferences and we will reach out to schedule a chat.</p>
+      {/* Open Trips Section */}
+      <section
+        id="journeys"
+        ref={journeysRef}
+        className="scroll-mt-24 bg-[#FFFBF5] py-14"
+      >
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12">
+          {/* Header Section */}
+          <div className="mb-12 flex flex-col justify-between gap-4 border-b border-[#1C1B1A]/10 pb-6 md:flex-row md:items-end">
+            <div>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
+                Current Expeditions
+              </p>
+              <h2 className="text-3xl font-light tracking-wide text-[#1C1B1A] md:text-5xl">
+                Our Active Seasonal Routes
+              </h2>
+            </div>
+            <div className="text-xs font-normal tracking-wide text-[#1C1B1A]/50">
+              {tripsLoading
+                ? "Syncing calendar..."
+                : `${openTrips?.length || 0} pathways available`}
+            </div>
           </div>
 
-          {success ? (
-            <div className="py-6 space-y-3 text-left">
-              <h3 className="text-lg font-bold text-[#D55D27]">Thank you for reaching out</h3>
-              <p className="text-sm text-[#45471D] leading-relaxed font-light">
-                We have received your request. A member of our team will read through your preferences and get in touch with you shortly.
-              </p>
+          {/* Content States */}
+          {tripsLoading ? (
+            <div className="rounded-[24px] border border-[#1C1B1A]/10 bg-[#FFFBF5] p-8 text-center text-sm font-normal text-[#1C1B1A]/65">
+              Fetching our upcoming seasonal schedules...
+            </div>
+          ) : tripsError ? (
+            <div className="rounded-[24px] border border-[#D55D27]/30 bg-[#FFFBF5] p-8 text-center text-sm font-normal text-[#D55D27]">
+              {tripsError}
+            </div>
+          ) : !openTrips || openTrips.length === 0 ? (
+            <div className="grid gap-6 rounded-[24px] border border-[#1C1B1A]/10 bg-[#FFFBF5] p-8 md:grid-cols-[1fr_auto] md:items-center md:p-12">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#D55D27]">
+                  In the Works
+                </p>
+                <h3 className="mt-2 text-2xl font-light tracking-wide text-[#1C1B1A] md:text-3xl">
+                  Designing new slow-travel chapters
+                </h3>
+                <p className="mt-3 max-w-xl text-sm leading-relaxed font-light text-[#1C1B1A]/60">
+                  We are currently scouting remote stays and mapping local
+                  trails for our next group layouts. Drop your preferences to
+                  get early access before dates go public.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => scrollTo(enquiryRef)}
+                className="rounded-xl bg-[#D55D27] px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#FFFBF5] shadow-sm transition hover:bg-[#1C1B1A]"
+              >
+                Register Preference
+              </button>
             </div>
           ) : (
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              {errorMsg && (
-                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700 font-medium">
-                  {errorMsg}
-                </div>
-              )}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {openTrips.map((trip, index) => {
+                const featured = index === 0;
+                const selected =
+                  formData?.trip_id &&
+                  String(formData.trip_id) === String(trip.id);
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Full Name *</label>
-                  <input 
-                    type="text" 
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors"
-                    placeholder="Enter your name"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Phone Number *</label>
-                    <input 
-                      type="tel" 
-                      name="phone"
-                      required
-                      placeholder="Enter your number"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Email Address (Optional)</label>
-                    <input 
-                      type="email" 
-                      name="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Select Your Trip</label>
-                    <select 
-                      name="trip_id"
-                      value={formData.trip_id}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors text-[#1C1B1A]"
+                return (
+                  <article
+                    key={trip.id}
+                    className={`group rounded-[24px] border p-6 transition-all duration-300 bg-[#FFFBF5] ${
+                      selected
+                        ? "border-[#D55D27] ring-1 ring-[#D55D27]"
+                        : "border-[#1C1B1A]/10 hover:border-[#1C1B1A]/30"
+                    } ${featured ? "lg:col-span-2" : ""}`}
+                  >
+                    <div
+                      className={`grid gap-6 ${featured ? "md:grid-cols-[1fr_260px]" : ""}`}
                     >
-                      {trips.length === 0 ? (
-                        <option value="">No active trips open</option>
-                      ) : (
-                        trips.map(trip => (
-                          <option key={trip.id} value={trip.id}>{trip.name}</option>
-                        ))
-                      )}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Who is travelling?</label>
-                    <select 
-                      name="group_type"
-                      value={formData.group_type}
-                      onChange={handleInputChange}
-                      className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors text-[#1C1B1A]"
-                    >
-                      <option value="solo">Solo</option>
-                      <option value="friends">With Friends</option>
-                      <option value="couple">As a Couple</option>
-                      <option value="family">With Family</option>
-                    </select>
-                  </div>
-                </div>
+                      <div className="flex flex-col justify-between">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#D55D27]">
+                            {formatTripDates(trip)}
+                          </p>
+                          <h3 className="mt-2 text-2xl font-medium tracking-tight text-[#1C1B1A] md:text-3xl">
+                            {getTripTitle(trip)}
+                          </h3>
+                          <p className="mt-1 text-xs font-normal uppercase tracking-wider text-[#1C1B1A]/50">
+                            {getTripLocation(trip)}
+                          </p>
+                          <p className="mt-4 text-sm leading-relaxed font-light text-[#1C1B1A]/70">
+                            {trip.description ||
+                              "An immersive micro-group itinerary built around community stays, heritage exploration, and decentralized regional paths."}
+                          </p>
+                        </div>
+                      </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">Preferred Month</label>
-                  <input 
-                    type="text" 
-                    name="preferred_month"
-                    placeholder="e.g. October"
-                    value={formData.preferred_month}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors"
-                  />
-                </div>
+                      <div className="flex flex-col justify-between rounded-[18px] border border-[#1C1B1A]/10 bg-[#FFFBF5] p-5 text-left transition-colors group-hover:border-[#1C1B1A]/20">
+                        <div>
+                          <div className="text-xl font-medium tracking-tight text-[#1C1B1A]">
+                            {formatTripPrice(trip.price)}
+                          </div>
+                          <p className="mt-1 text-[11px] font-normal text-[#1C1B1A]/40">
+                            Shared Cost / Micro-Group
+                          </p>
+                        </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#45471D]">What are you hoping this trip feels like?</label>
-                  <textarea 
-                    name="note"
-                    rows="4"
-                    placeholder="Tell us a bit about the pace or atmosphere you enjoy."
-                    value={formData.note}
-                    onChange={handleInputChange}
-                    className="w-full p-3 border border-[#D1B788]/40 rounded-lg text-sm bg-[#FFFBF5]/30 focus:outline-none focus:border-[#D55D27] transition-colors resize-none"
-                  ></textarea>
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                disabled={submitting}
-                className="w-full py-4 bg-[#D55D27] hover:bg-[#1C1B1A] text-white font-bold uppercase tracking-widest text-xs rounded-lg transition-colors duration-300 disabled:opacity-40 shadow-sm"
-              >
-                {submitting ? 'Sending Enquiry...' : 'Send Enquiry'}
-              </button>
-            </form>
+                        <button
+                          type="button"
+                          onClick={() => selectJourney(trip.id)}
+                          className="mt-6 w-full rounded-xl border border-[#D55D27] bg-transparent px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#D55D27] transition-all duration-300 hover:bg-[#D55D27] hover:text-white"
+                        >
+                          Request Invite
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           )}
         </div>
       </section>
 
-    </div>
+      {/* Enquiry Form Section */}
+      <section
+        id="enquiry"
+        ref={enquiryRef}
+        className="scroll-mt-24 bg-[#FFFBF5] pt-16 pb-28 w-full font-poppins"
+      >
+        <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12 ">
+          <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 items-start">
+            {/* Left Column */}
+            <div className="lg:sticky lg:top-32">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
+                Send an Enquiry
+              </p>
+              <h2 className="max-w-xl text-3xl leading-[1.2] font-normal tracking-tight text-[#1C1B1A] sm:text-4xl md:text-5xl">
+                Share a few details and we will help you choose well
+              </h2>
+              <div className="mt-6 h-[1px] w-12 bg-[#D55D27]/30" />
+              <p className="mt-6 max-w-md text-sm leading-relaxed font-light text-[#1C1B1A]/65">
+                This is not an automated booking flow. Your note helps our team
+                understand the trip, pace, and group style that would suit you.
+              </p>
+            </div>
+
+            {/* Right Column - Premium Clean Form Card */}
+            <div className="rounded-[28px] border border-[#D1B788]/25 bg-[#F4EFE6] p-6 sm:p-10 shadow-[0_24px_68px_-20px_rgba(28,27,26,0.05)] font-poppins">
+              {success ? (
+                <div className="rounded-[20px] bg-white/60 p-8 text-center md:py-12">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#D55D27]">
+                    Enquiry Received
+                  </p>
+                  <h3 className="mt-4 text-2xl font-normal tracking-tight text-[#1C1B1A]">
+                    Thank you for sharing your travel plans
+                  </h3>
+                  <p className="mt-3 mx-auto max-w-md text-sm leading-relaxed font-light text-[#1C1B1A]/70">
+                    The Nomichi team will read your note and reach out with a
+                    thoughtful next step.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {formError ? (
+                    <div className="rounded-xl border border-[#D55D27]/20 bg-white/80 p-4 text-xs font-medium text-[#D55D27]">
+                      {formError}
+                    </div>
+                  ) : null}
+
+                  {/* Full Name */}
+                  <div>
+                    <label htmlFor="name" className={labelClass}>
+                      Your name
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className={fieldClass}
+                      placeholder="Your name"
+                      autoComplete="name"
+                    />
+                  </div>
+
+                  {/* Phone Field with Custom Elegant Layout */}
+                  <div>
+                    <label htmlFor="phone" className={labelClass}>
+                      Phone
+                    </label>
+                    <div className="grid grid-cols-[135px_1fr] gap-3">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenDropdown((current) =>
+                              current === "country" ? null : "country",
+                            )
+                          }
+                          className={`${fieldClass} flex cursor-pointer items-center justify-between pr-3 text-left`}
+                          aria-haspopup="listbox"
+                          aria-expanded={openDropdown === "country"}
+                        >
+                          <span>India (+91)</span>
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        {openDropdown === "country" ? (
+                          <div
+                            className="absolute z-50 mt-2 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] p-2 shadow-[0_18px_50px_rgba(28,27,26,0.14)]"
+                            role="listbox"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setOpenDropdown(null)}
+                              className="block w-full rounded-lg bg-[#1C1B1A] px-4 py-3 text-left text-sm text-[#FFFBF5] transition"
+                              role="option"
+                              aria-selected="true"
+                            >
+                              India (+91)
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className={fieldClass}
+                        placeholder="98765 43210"
+                        autoComplete="tel"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email Address */}
+                  <div>
+                    <label htmlFor="email" className={labelClass}>
+                      Email, optional
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={fieldClass}
+                      placeholder="Your email address"
+                      autoComplete="email"
+                    />
+                  </div>
+
+                  {/* Which Trip Dropdown - Styled Custom Arrow */}
+                  <div>
+                    <label htmlFor="trip_id" className={labelClass}>
+                      Which trip
+                    </label>
+                    <div className="relative">
+                      <button
+                        id="trip_id"
+                        type="button"
+                        onClick={() =>
+                          setOpenDropdown((current) =>
+                            current === "trip" ? null : "trip",
+                          )
+                        }
+                        className={`${fieldClass} flex cursor-pointer items-center justify-between pr-4 text-left`}
+                        aria-haspopup="listbox"
+                        aria-expanded={openDropdown === "trip"}
+                      >
+                        <span>{selectedTripLabel}</span>
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+
+                      {openDropdown === "trip" ? (
+                        <div
+                          className="absolute z-50 mt-2 max-h-72 w-full overflow-hidden rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] p-2 shadow-[0_18px_50px_rgba(28,27,26,0.14)]"
+                          role="listbox"
+                        >
+                          <div className="flex flex-col gap-2">
+                            {[
+                              { id: "", name: "Not sure yet" },
+                              ...openTrips,
+                            ].map((trip) => {
+                              const value = trip.id;
+                              const selected =
+                                String(formData.trip_id || "") ===
+                                String(value);
+
+                              return (
+                                <button
+                                  key={value || "not-sure"}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((current) => ({
+                                      ...current,
+                                      trip_id: value,
+                                    }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className={`block w-full rounded-lg px-4 py-3 text-left text-sm transition ${
+                                    selected
+                                      ? "bg-[#1C1B1A] text-[#FFFBF5]"
+                                      : "text-[#1C1B1A] hover:bg-[#1C1B1A] hover:text-[#FFFBF5]"
+                                  }`}
+                                  role="option"
+                                  aria-selected={selected}
+                                >
+                                  {value ? getTripTitle(trip) : trip.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Who is Travelling Dropdown */}
+                  <div>
+                    <label htmlFor="group_type" className={labelClass}>
+                      Who is travelling
+                    </label>
+                    <div className="relative">
+                      <button
+                        id="group_type"
+                        type="button"
+                        onClick={() =>
+                          setOpenDropdown((current) =>
+                            current === "group" ? null : "group",
+                          )
+                        }
+                        className={`${fieldClass} flex cursor-pointer items-center justify-between pr-4 text-left`}
+                        aria-haspopup="listbox"
+                        aria-expanded={openDropdown === "group"}
+                      >
+                        <span>{selectedGroupLabel}</span>
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
+
+                      {openDropdown === "group" ? (
+                        <div
+                          className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] p-2 shadow-[0_18px_50px_rgba(28,27,26,0.14)]"
+                          role="listbox"
+                        >
+                          <div className="flex flex-col gap-2">
+                            {groupOptions.map((option) => {
+                              const selected =
+                                formData.group_type === option.value;
+
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((current) => ({
+                                      ...current,
+                                      group_type: option.value,
+                                    }));
+                                    setOpenDropdown(null);
+                                  }}
+                                  className={`block w-full rounded-lg px-4 py-3 text-left text-sm transition ${
+                                    selected
+                                      ? "bg-[#1C1B1A] text-[#FFFBF5]"
+                                      : "text-[#1C1B1A] hover:bg-[#1C1B1A] hover:text-[#FFFBF5]"
+                                  }`}
+                                  role="option"
+                                  aria-selected={selected}
+                                >
+                                  {option.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Textarea Description Notes */}
+                  <div>
+                    <label htmlFor="note" className={labelClass}>
+                      What are you hoping this trip feels like?
+                    </label>
+                    <textarea
+                      id="note"
+                      name="note"
+                      rows={4}
+                      value={formData.note}
+                      onChange={handleInputChange}
+                      className={`${fieldClass} resize-none leading-relaxed`}
+                      placeholder="Tell us about the pace, mood, or experience you are looking for."
+                    />
+                  </div>
+
+                  {/* Premium Elegant Action Button */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="w-full rounded-xl bg-[#D55D27] py-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#FFFBF5] transition-all duration-300 hover:bg-[#1C1B1A] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#D1B788]/50"
+                    >
+                      {submitting ? "Sending..." : "Send Enquiry"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Section */}
+      <footer className="w-full bg-[#1C1B1A] pt-20 pb-12 text-[#FFFBF5] font-poppins">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Upper Grid */}
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-end">
+            {/* Column 1: Brand & Philosophy */}
+            <div className="space-y-4">
+              <span className="text-3xl font-medium tracking-[0.1em] text-white uppercase">
+                Nomichi
+              </span>
+              <p className="max-w-xs text-xs font-light leading-relaxed tracking-wide text-[#FFFBF5]/50">
+                Slow-crafted journeys for curious minds. We design experiences
+                that stay with you long after the trip ends.
+              </p>
+            </div>
+
+            {/* Column 2: Big Bold Statement */}
+            <div className="lg:col-span-2 lg:text-right">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#D55D27] mb-2">
+                Beyond Itineraries
+              </p>
+              <h2 className="text-3xl font-light tracking-tight sm:text-5xl text-white leading-tight">
+                Where curiosity meets <br className="hidden sm:inline" />
+                <span className="text-[#D55D27] font-normal">
+                  thoughtful
+                </span>{" "}
+                exploration
+              </h2>
+            </div>
+          </div>
+
+          <div className="mt-16 border-t border-[#FFFBF5]/10" />
+
+          {/* Bottom Bar: Links & Copyright */}
+          <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between text-[11px] tracking-widest uppercase">
+            {/* Left: Quick Actions - Links fixed to prevent dead anchors */}
+            <div className="flex gap-8 text-[#FFFBF5]/60">
+              <a
+                href="#enquiry"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document
+                    .getElementById("enquiry")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="transition-colors duration-300 hover:text-[#D55D27] font-medium"
+              >
+                Plan a Journey
+              </a>
+              <a
+                href="#enquiry"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document
+                    .getElementById("enquiry")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="transition-colors duration-300 hover:text-[#D55D27]"
+              >
+                Our Story
+              </a>
+            </div>
+
+            {/* Right: Credits */}
+            <p className="text-[#FFFBF5]/40 font-light normal-case tracking-normal">
+              &copy; {new Date().getFullYear()} Nomichi Explorers India. All
+              rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 }

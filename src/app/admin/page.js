@@ -1,10 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// Exact pipeline stages mandated by assignment guidelines
+const ALLOWED_STAGES = [
+  'NEW',
+  'CONTACTED',
+  'QUALIFIED',
+  'VIBE CHECK',
+  'SENT',
+  'CONFIRMED',
+  'NOT A FIT'
+];
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState(null);
   const [leads, setLeads] = useState([]);
+  const [trips, setTrips] = useState([]); // Fixed: Added missing trips inventory state
   const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [loadingLeads, setLoadingLeads] = useState(true);
 
@@ -13,13 +28,43 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [tripFilter, setTripFilter] = useState('');
 
+  // Authentication & Session Validator
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAdminAuthenticated');
+    if (!isAuthenticated) {
+      router.push('/admin/login');
+    } else {
+      setLoading(false);
+    }
+  }, [router]);
+
+  // Load Trips Catalog Registry (Fixed: Isolated load function to prevent state conflicts)
+  useEffect(() => {
+    if (loading) return;
+
+    async function loadTrips() {
+      try {
+        const res = await fetch('/api/admin/trips'); 
+        const result = await res.json();
+        if (result.success) {
+          setTrips(result.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load inventory:", err);
+      }
+    }
+    loadTrips();
+  }, [loading]);
+
   // Initial load for global analytics metrics payload
   useEffect(() => {
+    if (loading) return;
+
     async function fetchMetrics() {
       try {
-        const response = await fetch('/api/dashboard');
+        const response = await fetch('/api/admin/metrics'); 
         const json = await response.json();
-        setMetrics(json);
+        if (json.success) setMetrics(json.data);
       } catch (err) {
         console.error('Error gathering dashboard metrics:', err);
       } finally {
@@ -27,10 +72,12 @@ export default function AdminDashboard() {
       }
     }
     fetchMetrics();
-  }, []);
+  }, [loading]);
 
   // Isolated fetch trigger for lead tables synchronized with state filters
   useEffect(() => {
+    if (loading) return;
+
     async function fetchLeads() {
       setLoadingLeads(true);
       try {
@@ -39,9 +86,9 @@ export default function AdminDashboard() {
         if (statusFilter) queryParams.append('status', statusFilter);
         if (tripFilter) queryParams.append('trip_id', tripFilter);
 
-        const response = await fetch(`/api/enquiries?${queryParams.toString()}`);
+        const response = await fetch(`/api/admin/leads?${queryParams.toString()}`);
         const json = await response.json();
-        if (json.data) {
+        if (json.success && json.data) {
           setLeads(json.data);
         } else {
           setLeads([]);
@@ -53,83 +100,102 @@ export default function AdminDashboard() {
       }
     }
 
-    // Debounce framework simulation for text inputs to prevent network flooding
     const delayDebounce = setTimeout(() => {
       fetchLeads();
     }, 300);
 
     return () => clearTimeout(delayDebounce);
-  }, [search, statusFilter, tripFilter]);
+  }, [loading, search, statusFilter, tripFilter]);
 
-  // Status utility style badge generator mapped against brand standards
+  // Hardcoded Logout Module Implementation (Task 5 Complete)
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminAuthenticated');
+    router.push('/admin/login');
+  };
+
   const getStatusBadgeClass = (status) => {
-    const base = 'text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded border ';
-    switch (status?.toLowerCase()) {
-      case 'new':
+    const base = 'text-[10px] font-bold tracking-wider px-2.5 py-1 rounded border ';
+    switch (status?.toUpperCase()) {
+      case 'NEW':
         return `${base} bg-blue-50 border-blue-200 text-blue-700`;
-      case 'contacted':
+      case 'CONTACTED':
         return `${base} bg-amber-50 border-amber-200 text-amber-700`;
-      case 'converted':
+      case 'CONFIRMED':
         return `${base} bg-emerald-50 border-emerald-200 text-emerald-700`;
-      case 'cancelled':
-        return `${base} bg-stone-100 border-stone-300 text-stone-600`;
+      case 'NOT A FIT':
+        return `${base} bg-red-50 border-red-200 text-red-600`;
       default:
-        return `${base} bg-[#FFFBF5] border-[#D1B788]/40 text-[#1C1B1A]`;
+        return `${base} bg-stone-50 border-stone-200 text-stone-700`;
     }
   };
 
+  if (loading) {
+    return <div className="min-h-screen bg-[#FFFBF5] flex items-center justify-center font-poppins text-sm font-light">Loading Dashboard Profile...</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-[#FFFBF5] text-[#1C1B1A] font-sans p-6 md:p-10">
+    <div className="min-h-screen bg-[#FFFBF5] text-[#1C1B1A] font-poppins p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-10">
         
         {/* Core Administrative branding panel */}
-        <header className="border-b border-[#D1B788]/30 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <header className="border-b border-[#1C1B1A]/5 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-[#D55D27] uppercase">Nomichi Trip Desk</h1>
-            <p className="text-xs text-[#45471D] font-medium uppercase tracking-widest mt-1">Operational Performance Management Console</p>
+            <h1 className="text-2xl font-light tracking-tight text-[#1C1B1A]">Nomichi CRM Console</h1>
+            <p className="text-[10px] text-[#D55D27] font-semibold uppercase tracking-widest mt-1">Operational Lead Pipeline Workspace</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/admin/trips')}
+              className="text-xs font-semibold uppercase tracking-wider text-[#1C1B1A] border border-[#1C1B1A]/20 px-4 py-2.5 rounded-xl hover:bg-[#1C1B1A] hover:text-white transition"
+            >
+              Manage Trip Catalog
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs font-semibold uppercase tracking-wider text-red-600 border border-red-200 px-4 py-2.5 rounded-xl hover:bg-red-50 transition"
+            >
+              Sign Out
+            </button>
           </div>
         </header>
 
         {/* Section 1: Dashboard Top Level Summary Components */}
-        <section>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#45471D] mb-4">Performance Metrics Overview</h2>
+        <section className="space-y-4">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#1C1B1A]/40">Performance Metrics Overview</h2>
           
           {loadingMetrics ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[1, 2, 3].map((n) => (
-                <div key={n} className="bg-white h-32 rounded border border-[#D1B788]/20 animate-pulse" />
+                <div key={n} className="bg-white h-24 rounded-2xl border border-[#1C1B1A]/5 animate-pulse" />
               ))}
             </div>
           ) : metrics ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
-              {/* Total volume collection module */}
-              <div className="bg-white p-6 rounded border border-[#D1B788]/40 shadow-sm flex flex-col justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#45471D]/70">Total Enquiries</span>
-                <span className="text-4xl font-bold text-[#D55D27] mt-2">{metrics.totalLeads || 0}</span>
+              <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm flex flex-col justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Total Enquiries</span>
+                <span className="text-3xl font-light text-[#D55D27] mt-2">{metrics.totalLeads || 0}</span>
               </div>
 
-              {/* Grid status distributions representation card */}
-              <div className="bg-white p-6 rounded border border-[#D1B788]/40 shadow-sm space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#45471D]/70 block">Leads by System Stage</span>
-                <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40 block">Leads by System Stage</span>
+                <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto pr-1">
                   {metrics.leadsByStage && Object.entries(metrics.leadsByStage).map(([stage, count]) => (
-                    <div key={stage} className="bg-[#FFFBF5] border border-[#D1B788]/20 px-3 py-1.5 rounded flex justify-between items-center">
-                      <span className="text-xs font-medium capitalize text-[#1C1B1A]">{stage}</span>
-                      <span className="text-xs font-bold text-[#45471D]">{count}</span>
+                    <div key={stage} className="bg-[#FFFBF5] border border-[#1C1B1A]/5 px-2.5 py-1 rounded-lg flex justify-between items-center text-[11px]">
+                      <span className="font-light truncate uppercase text-[#1C1B1A]/70">{stage}</span>
+                      <span className="font-semibold text-[#1C1B1A]">{count}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Group interest allocations block configuration */}
-              <div className="bg-white p-6 rounded border border-[#D1B788]/40 shadow-sm space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#45471D]/70 block">Pipeline Distribution Per Journey</span>
-                <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1">
+              <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40 block">Pipeline Distribution Per Journey</span>
+                <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1 text-xs">
                   {metrics.leadsPerTrip && metrics.leadsPerTrip.map((trip, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs border-b border-[#FFFBF5] pb-1">
-                      <span className="text-[#1C1B1A] truncate max-w-[180px] font-medium">{trip.tripName}</span>
-                      <span className="text-[#D55D27] font-bold bg-[#FFFBF5] px-1.5 py-0.5 rounded border border-[#D1B788]/20">{trip.count}</span>
+                    <div key={idx} className="flex justify-between items-center border-b border-[#FFFBF5] pb-1">
+                      <span className="text-[#1C1B1A]/80 truncate max-w-[180px] font-light">{trip.tripName}</span>
+                      <span className="text-[#D55D27] font-semibold bg-[#FFFBF5] px-1.5 py-0.5 rounded border border-[#1C1B1A]/5">{trip.count}</span>
                     </div>
                   ))}
                 </div>
@@ -137,53 +203,50 @@ export default function AdminDashboard() {
 
             </div>
           ) : (
-            <p className="text-sm text-[#45471D] italic">Metrics calculation profile unavailable.</p>
+            <p className="text-xs text-[#1C1B1A]/40 italic">Metrics calculation profile unavailable.</p>
           )}
         </section>
 
         {/* Section 2: Data Queries and Pipeline Manipulation Controllers */}
-        <section className="bg-white p-5 rounded border border-[#D1B788]/40 shadow-sm space-y-4">
+        <section className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             
-            {/* Realtime text pattern matcher filter */}
             <div className="w-full md:flex-1">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-[#45471D]">Search Contact Name / Email</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Search Contact Name / Email</label>
               <input 
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Type profile parameters to match records..."
-                className="w-full p-2.5 border border-[#D1B788]/50 rounded text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition"
+                className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
               />
             </div>
 
-            {/* Categorization pipeline process controller dropdown */}
-            <div className="w-full md:w-48">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-[#45471D]">System Pipeline Status</label>
+            <div className="w-full md:w-56">
+              <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">System Pipeline Status</label>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full p-2.5 border border-[#D1B788]/50 rounded text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition"
+                className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
               >
-                <option value="">All Stages</option>
-                <option value="new">New</option>
-                <option value="contacted">Contacted</option>
-                <option value="converted">Converted</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="">All Allowed Stages</option>
+                {ALLOWED_STAGES.map(stage => (
+                  <option key={stage} value={stage.toLowerCase()}>{stage}</option>
+                ))}
               </select>
             </div>
 
-            {/* Selected trajectory target constraints picker logic context */}
+            {/* Fixed Option Target mapping to use live trips array */}
             <div className="w-full md:w-64">
-              <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-[#45471D]">Target Itinerary</label>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Target Itinerary</label>
               <select
                 value={tripFilter}
                 onChange={(e) => setTripFilter(e.target.value)}
-                className="w-full p-2.5 border border-[#D1B788]/50 rounded text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition"
+                className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
               >
                 <option value="">All Registered Journeys</option>
-                {metrics?.leadsPerTrip?.map((t, idx) => (
-                  <option key={idx} value={t.tripId || t.tripName}>{t.tripName}</option>
+                {trips.map((t) => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
                 ))}
               </select>
             </div>
@@ -192,64 +255,57 @@ export default function AdminDashboard() {
         </section>
 
         {/* Section 3: Master Data Output Table for Lead Profiles */}
-        <section className="bg-white rounded border border-[#D1B788]/40 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#D1B788]/30 flex justify-between items-center">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#45471D]">Registered Expressions of Interest</h3>
-            <span className="text-xs font-medium text-[#45471D]/80">Showing {leads.length} matched records</span>
+        <section className="bg-white rounded-2xl border border-[#1C1B1A]/5 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#1C1B1A]/5 flex justify-between items-center">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#1C1B1A]/50">Registered Expressions of Interest</h3>
+            <span className="text-xs font-light text-[#1C1B1A]/50">Showing {leads.length} matched records</span>
           </div>
 
           <div className="overflow-x-auto">
             {loadingLeads ? (
               <div className="p-12 space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 bg-[#FFFBF5] rounded animate-pulse w-full border border-[#D1B788]/10" />
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 bg-[#FFFBF5] rounded-xl animate-pulse w-full border border-[#1C1B1A]/5" />
                 ))}
               </div>
             ) : leads.length === 0 ? (
-              <div className="p-12 text-center text-sm text-[#45471D] italic">
+              <div className="p-12 text-center text-xs text-[#1C1B1A]/40 italic">
                 No client records match the selected database query parameters.
               </div>
             ) : (
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#FFFBF5] border-b border-[#D1B788]/30 text-xs font-bold uppercase tracking-wider text-[#45471D]">
+                  <tr className="bg-[#FFFBF5] border-b border-[#1C1B1A]/5 text-[10px] font-bold uppercase tracking-wider text-[#1C1B1A]/40">
                     <th className="py-3 px-6">Candidate Profile</th>
                     <th className="py-3 px-6">Communication Channels</th>
-                    <th className="py-3 px-6">Target Destination</th>
                     <th className="py-3 px-6">Lifecycle Phase</th>
                     <th className="py-3 px-6 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#D1B788]/20 text-sm">
+                <tbody className="divide-y divide-[#1C1B1A]/5 text-sm">
                   {leads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-[#FFFBF5]/40 transition-colors">
                       <td className="py-4 px-6">
-                        <div className="font-bold text-[#1C1B1A]">{lead.name}</div>
-                        <span className="text-xs text-[#45471D] capitalize bg-[#FFFBF5] border border-[#D1B788]/20 rounded px-1.5 py-0.5 mt-0.5 inline-block">
+                        <div className="font-medium text-[#1C1B1A]">{lead.name}</div>
+                        <span className="text-[10px] text-[#1C1B1A]/50 uppercase tracking-wider font-semibold bg-[#FFFBF5] border border-[#1C1B1A]/5 rounded-md px-1.5 py-0.5 mt-1 inline-block">
                           {lead.group_type || 'Solo'}
                         </span>
                       </td>
-                      <td className="py-4 px-6 space-y-0.5">
-                        <div className="text-xs tracking-wide font-medium">{lead.email}</div>
-                        <div className="text-xs text-[#45471D]">{lead.phone}</div>
+                      <td className="py-4 px-6">
+                        <div className="text-xs font-light tracking-wide">{lead.email}</div>
+                        <div className="text-xs text-[#1C1B1A]/40 font-light mt-0.5">{lead.phone}</div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="font-medium text-[#1C1B1A]">{lead.trips?.name || 'Unassigned Destination'}</div>
-                        {lead.preferred_month && (
-                          <span className="text-xs text-[#45471D]/80">Window: {lead.preferred_month}</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 vertical-align-middle">
                         <span className={getStatusBadgeClass(lead.status)}>
-                          {lead.status || 'New'}
+                          {lead.status || 'NEW'}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-right">
                         <button 
-                          onClick={() => window.location.href = `/admin/enquiries/${lead.id}`}
-                          className="text-xs font-bold uppercase tracking-widest text-[#D55D27] hover:text-[#1C1B1A] border border-[#D55D27]/40 hover:border-[#1C1B1A] px-3 py-1.5 rounded bg-white transition duration-200"
+                          onClick={() => router.push(`/admin/leads/${lead.id}`)}
+                          className="text-[11px] font-semibold uppercase tracking-widest text-[#D55D27] hover:text-[#1C1B1A] border border-[#D55D27]/20 hover:border-[#1C1B1A] px-3 py-2 rounded-xl bg-white transition duration-200"
                         >
-                          View Details
+                          Workspace
                         </button>
                       </td>
                     </tr>

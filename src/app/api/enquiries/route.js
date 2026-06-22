@@ -8,9 +8,9 @@ export async function POST(request) {
     const { name, phone, email, group_type, preferred_month, note, trip_id } = body;
 
     // Server side validation for required fields
-    if (!name || !phone || !email || !trip_id) {
+    if (!name || !phone) {
       return NextResponse.json(
-        { error: 'Missing required fields. Name, phone, email, and trip selection are mandatory.' },
+        { error: 'Missing required fields. Name and phone are mandatory.' },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function POST(request) {
           group_type,
           preferred_month,
           note,
-          trip_id,
+          trip_id: trip_id || null,
           status: 'NEW' // Default explicitly stated
         }
       ])
