@@ -168,14 +168,20 @@ export default function TripCMSPage() {
             </div>
             <div>
               <label className="block mb-1 font-medium text-[#1C1B1A]/60">Price including GST</label>
+              <p className="mb-2 text-[11px] leading-5 text-[#1C1B1A]/45">Enter the full trip price. The app will show the base amount and GST below.</p>
               <input type="number" required value={formData.price} onChange={(e) => handleFieldChange('price', e.target.value)} className="min-h-11 w-full bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl p-3 text-sm outline-none" placeholder="28000" />
               {priceBreakdown ? (
                 <div className="mt-2 rounded-lg border border-[#D1B788]/35 bg-[#FFFBF5] p-2 text-[11px] leading-5 text-[#1C1B1A]/65">
+                  <div className="mb-1 font-semibold text-[#1C1B1A]/75">GST breakdown</div>
                   <div>Base amount: {formatCurrency(priceBreakdown.baseAmount)}</div>
                   <div>GST: {formatCurrency(priceBreakdown.gstAmount)}</div>
                   <div className="mt-1 text-[#1C1B1A]/45">Calculated using the standard 5% GST rate for travel pricing.</div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="mt-2 rounded-lg border border-dashed border-[#D1B788]/35 bg-[#FFFBF5] p-2 text-[11px] leading-5 text-[#1C1B1A]/45">
+                  Enter a price to see the GST split here.
+                </div>
+              )}
             </div>
             <div>
               <label className="block mb-1 font-medium text-[#1C1B1A]/60">Total Seats</label>

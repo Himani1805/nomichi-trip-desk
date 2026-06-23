@@ -4,13 +4,13 @@ Nomichi Trip Desk is a practical trip enquiry and operations tool for Nomichi. I
 
 ## Live Demo
 
-Placeholder for Vercel URL.
+Deployment URL: https://nomichi-trip-desk.vercel.app
 
 ## Admin Access
 
-Placeholder for:
-- Email:
-- Password:
+Use the following admin credentials:
+- Email: admin@nomichi.com
+- Password: admin123
 
 ## Features
 
