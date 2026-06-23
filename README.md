@@ -4,7 +4,7 @@ Nomichi Trip Desk is a practical trip enquiry and operations tool for Nomichi. I
 
 ## Live Demo
 
-Deployment URL: https://nomichi-trip-desk.vercel.app
+Deployment URL: https://nomichi-trip-desk-xi.vercel.app/
 
 ## Admin Access
 
@@ -99,4 +99,6 @@ The app is designed for deployment on Vercel with environment variables configur
 | AI draft assistant | Completed |
 
 ## Final Note
-The goal was to build a practical tool a Nomichi associate could use immediately, rather than a generic CRM with unnecessary complexity.
+Built a practical Nomichi Trip Desk that helps travellers discover trips, submit enquiries, and gives the team a simple admin workspace to manage leads, trips, notes, and follow-up. I’m especially proud of designing the experience around the real Nomichi workflow, making GST-inclusive pricing clearer for admins, and keeping the product focused on the core needs rather than unnecessary complexity.
+
+With another week, I would strengthen the follow-up experience with reminders, a richer activity timeline, and better analytics.
