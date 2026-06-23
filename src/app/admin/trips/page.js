@@ -3,6 +3,34 @@
 import { useState, useEffect } from 'react';
 import { adminFetch } from '@/utils/adminApi';
 
+const GST_RATE = 0.05;
+
+function formatCurrency(value) {
+  const numericValue = Number(value);
+
+  if (Number.isNaN(numericValue)) {
+    return '₹0';
+  }
+
+  return `₹${numericValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+}
+
+function getInclusivePriceBreakdown(price) {
+  const numericValue = Number(price);
+
+  if (Number.isNaN(numericValue) || numericValue <= 0) {
+    return null;
+  }
+
+  const baseAmount = numericValue / (1 + GST_RATE);
+  const gstAmount = numericValue - baseAmount;
+
+  return {
+    baseAmount,
+    gstAmount,
+  };
+}
+
 export default function TripCMSPage() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +138,8 @@ export default function TripCMSPage() {
     }
   };
 
+  const priceBreakdown = getInclusivePriceBreakdown(formData.price);
+
   if (loading) return <div className="text-sm font-light">Loading trips...</div>;
 
   return (
@@ -139,6 +169,13 @@ export default function TripCMSPage() {
             <div>
               <label className="block mb-1 font-medium text-[#1C1B1A]/60">Price including GST</label>
               <input type="number" required value={formData.price} onChange={(e) => handleFieldChange('price', e.target.value)} className="min-h-11 w-full bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl p-3 text-sm outline-none" placeholder="28000" />
+              {priceBreakdown ? (
+                <div className="mt-2 rounded-lg border border-[#D1B788]/35 bg-[#FFFBF5] p-2 text-[11px] leading-5 text-[#1C1B1A]/65">
+                  <div>Base amount: {formatCurrency(priceBreakdown.baseAmount)}</div>
+                  <div>GST: {formatCurrency(priceBreakdown.gstAmount)}</div>
+                  <div className="mt-1 text-[#1C1B1A]/45">Calculated using the standard 5% GST rate for travel pricing.</div>
+                </div>
+              ) : null}
             </div>
             <div>
               <label className="block mb-1 font-medium text-[#1C1B1A]/60">Total Seats</label>

@@ -137,7 +137,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
   const submittedAt = lead.created_at ? new Date(lead.created_at).toLocaleString() : 'Not available';
   const selectedJourney = lead.trips?.name || lead.trip_interest || 'General interest';
-  const selectedDestination = lead.trips?.destination || lead.destination || 'Not shared';
+  const selectedDestination = lead.trips?.destination || lead.trips?.location || lead.destination || 'Not shared';
   const travellerNote = lead.note || lead.message || lead.travel_feeling || 'No trip feeling note shared yet.';
 
   return (

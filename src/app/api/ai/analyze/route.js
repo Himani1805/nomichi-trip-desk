@@ -21,6 +21,7 @@ export async function POST(request) {
         trips (
           name,
           destination,
+          location,
           description
         )
       `)
@@ -40,7 +41,7 @@ export async function POST(request) {
 Analyze this traveller enquiry and return a raw JSON object.
 
 Traveller Name: ${enquiry.name}
-Trip Selected: ${enquiry.trips?.name || 'General interest'} to ${enquiry.trips?.destination || 'Explore'}
+Trip Selected: ${enquiry.trips?.name || 'General interest'} to ${enquiry.trips?.destination || enquiry.trips?.location || 'Explore'}
 Trip Info: ${enquiry.trips?.description || ''}
 Traveller Preferred Pace / Hope for the trip: "${enquiry.note || 'Not specified'}"
 
