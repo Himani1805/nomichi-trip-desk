@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/utils/supabaseClient';
+import { requireAdminUser } from '@/utils/adminAuth';
 
 export async function POST(request) {
   try {
+    const auth = await requireAdminUser(request);
+    if (auth.response) return auth.response;
+
     const body = await request.json();
     const { enquiryId } = body;
 
@@ -10,7 +14,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing enquiry id parameter' }, { status: 400 });
     }
 
-    // Fetch the enquiry details joined with trip details from supabase
     const { data: enquiry, error: dbError } = await supabase
       .from('enquiries')
       .select(`
@@ -33,7 +36,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Gemini API key configuration missing' }, { status: 500 });
     }
 
-    // Construct the prompt enforcing the strict brand rules outlined in the assignment brief
     const prompt = `You are an internal tool helper for Nomichi, a slow travel brand.
 Analyze this traveller enquiry and return a raw JSON object.
 
@@ -57,7 +59,6 @@ Return a valid JSON object matching this schema exactly:
 
 Return only the raw JSON. Do not wrap it in markdown code blocks.`;
 
-    // Native fetch request targeting the standard Gemini model endpoint
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
@@ -94,7 +95,6 @@ Return only the raw JSON. Do not wrap it in markdown code blocks.`;
       return NextResponse.json({ error: 'Empty payload generated from model response' }, { status: 500 });
     }
 
-    // Parse the generated model string back to structural JSON data
     const parsedData = JSON.parse(rawText.trim());
 
     return NextResponse.json({ data: parsedData }, { status: 200 });

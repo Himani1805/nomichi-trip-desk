@@ -1,11 +1,10 @@
-// src/app/admin/leads/[id]/page.js (Updated with Owner Assignment Module)
 'use client';
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { adminFetch } from '@/utils/adminApi';
 
 const ALLOWED_STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'VIBE CHECK', 'SENT', 'CONFIRMED', 'NOT A FIT'];
 
-// असाइनमेंट के लिए टीम मेंबर्स की लिस्ट (इसे आवश्यकतानुसार बदल सकती हैं)
 const AVAILABLE_OWNERS = [
   'Unassigned',
   'Ananya Nair',
@@ -24,21 +23,22 @@ export default function LeadDetailPage({ params: paramsPromise }) {
   const [updating, setUpdating] = useState(false);
   const [ownerUpdating, setOwnerUpdating] = useState(false);
   
-  // Notes State
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [notesLoading, setNotesLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [vibeCheck, setVibeCheck] = useState('');
+  const [whatsappDraft, setWhatsappDraft] = useState('');
 
   useEffect(() => {
     async function fetchLeadData() {
       try {
-        // Fetch Lead Details
-        const leadRes = await fetch(`/api/admin/leads/${id}`);
+        const leadRes = await adminFetch(`/api/admin/leads/${id}`);
         const leadResult = await leadRes.json();
         if (leadResult.success) setLead(leadResult.data);
 
-        // Fetch Existing Notes
-        const notesRes = await fetch(`/api/admin/leads/${id}/notes`);
+        const notesRes = await adminFetch(`/api/admin/leads/${id}/notes`);
         const notesResult = await notesRes.json();
         if (notesResult.success) setNotes(notesResult.data || []);
         
@@ -51,11 +51,10 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     fetchLeadData();
   }, [id]);
 
-  // Status Change API Caller
   const handleStatusChange = async (newStatus) => {
     setUpdating(true);
     try {
-      const res = await fetch(`/api/admin/leads/${id}`, {
+      const res = await adminFetch(`/api/admin/leads/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -69,11 +68,10 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     }
   };
 
-  // Owner Assignment API Caller (Task 3 Core)
   const handleOwnerChange = async (newOwner) => {
     setOwnerUpdating(true);
     try {
-      const res = await fetch(`/api/admin/leads/${id}`, {
+      const res = await adminFetch(`/api/admin/leads/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ owner: newOwner === 'Unassigned' ? null : newOwner }),
@@ -87,14 +85,13 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     }
   };
 
-  // Add Note Submit Handler
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!newNote.trim()) return;
     setNotesLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/leads/${id}/notes`, {
+      const res = await adminFetch(`/api/admin/leads/${id}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newNote }),
@@ -111,6 +108,30 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     }
   };
 
+  const handleGenerateAiInsights = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const res = await adminFetch('/api/ai/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enquiryId: id }),
+      });
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Could not generate the WhatsApp draft.');
+      }
+
+      setVibeCheck(result.data?.vibeCheck || '');
+      setWhatsappDraft(result.data?.whatsappDraft || '');
+    } catch (err) {
+      setAiError(err.message || 'Could not generate the WhatsApp draft.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   if (loading) return <div className="p-8 text-sm font-light">Loading Lead Workspace...</div>;
   if (!lead) return <div className="p-8 text-sm text-red-500">Lead not found.</div>;
 
@@ -118,14 +139,13 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     <div className="min-h-screen bg-[#FFFBF5] p-8 font-poppins text-[#1C1B1A]">
       <div className="mb-8 flex items-center justify-between">
         <button onClick={() => router.push('/admin/dashboard')} className="text-xs tracking-widest uppercase text-[#1C1B1A]/60 hover:text-[#D55D27]">
-          ← Back to Dashboard
+          &larr; Back to Dashboard
         </button>
         <span className="text-xs uppercase bg-[#D55D27]/10 text-[#D55D27] px-3 py-1 rounded-full font-medium">Workspace Active</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Section: Information Info */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
             <div>
@@ -140,12 +160,11 @@ export default function LeadDetailPage({ params: paramsPromise }) {
               </div>
               <div>
                 <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Destination</span>
-                <span className="font-light">{lead.destination || lead.trip_interest || 'N/A'}</span>
+                <span className="font-light">{lead.trips?.destination || lead.trips?.name || lead.destination || lead.trip_interest || 'N/A'}</span>
               </div>
             </div>
           </div>
 
-          {/* CRM Call Notes & History Logs Module */}
           <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27]">Call Notes / Touchpoints</h3>
             
@@ -188,9 +207,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
           </div>
         </div>
 
-        {/* Right Section: Pipeline & Control Center */}
         <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
-          {/* 1. Status Section */}
           <div>
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-3">Pipeline Status</h3>
             <div className="relative">
@@ -210,12 +227,11 @@ export default function LeadDetailPage({ params: paramsPromise }) {
           
           <hr className="border-[#1C1B1A]/5" />
           
-          {/* 2. Owner Section (Task 3 Complete Implementation) */}
           <div>
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-3">Lead Assignment</h3>
             <div className="relative">
               <select
-                value={lead.owner || 'Unassigned'}
+                value={lead.assigned_owner || 'Unassigned'}
                 onChange={(e) => handleOwnerChange(e.target.value)}
                 disabled={ownerUpdating}
                 className="w-full appearance-none bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D55D27] disabled:opacity-50 font-light"
@@ -229,6 +245,40 @@ export default function LeadDetailPage({ params: paramsPromise }) {
             <p className="mt-2 text-[10px] font-light text-[#1C1B1A]/40 leading-relaxed">
               Assign a dedicated curator to handle this enquiry pipeline.
             </p>
+          </div>
+
+          <hr className="border-[#1C1B1A]/5" />
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-2">WhatsApp Draft</h3>
+              <p className="text-[10px] font-light text-[#1C1B1A]/40 leading-relaxed">
+                Generate a warm first response based on the enquiry note and selected journey.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateAiInsights}
+              disabled={aiLoading}
+              className="w-full rounded-lg bg-[#1C1B1A] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#D55D27] disabled:opacity-40 transition-colors"
+            >
+              {aiLoading ? 'Generating...' : 'Generate Draft'}
+            </button>
+            {aiError && (
+              <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+                {aiError}
+              </p>
+            )}
+            {vibeCheck && (
+              <div className="rounded-xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4 text-xs leading-relaxed text-[#1C1B1A]/75">
+                {vibeCheck}
+              </div>
+            )}
+            {whatsappDraft && (
+              <div className="rounded-xl bg-[#1C1B1A] p-4 text-xs leading-relaxed text-[#FFFBF5] whitespace-pre-wrap">
+                {whatsappDraft}
+              </div>
+            )}
           </div>
         </div>
 

@@ -2,28 +2,22 @@
 @import "tailwindcss";
 
 :root {
-  /* Nomichi signature color tokens for structural utility */
-  --background: #FFFBF5; /* Cream background [cite: 148] */
-  --foreground: #1C1B1A; /* Ink typography [cite: 145] */
+  --background: #FFFBF5;
+  --foreground: #1C1B1A;
 }
 
 @theme inline {
-  /* Overwriting base configuration to implement Nomichi brand colors  */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   
-  --color-nomichi-rust: #D55D27;   /* Rust [cite: 143] */
-  --color-nomichi-yellow: #FFFEOO; /* Yellow [cite: 144] */
-  --color-nomichi-ink: #1C1B1A;    /* Ink [cite: 145] */
-  --color-nomichi-olive: #45471D;  /* Olive [cite: 146] */
-  --color-nomichi-sand: #D1B788;   /* Sand [cite: 147] */
-  --color-nomichi-cream: #FFFBF5;  /* Cream [cite: 148] */
+  --color-nomichi-rust: #D55D27;
+  --color-nomichi-ink: #1C1B1A;
+  --color-nomichi-sand: #D1B788;
+  --color-nomichi-cream: #FFFBF5;
 
-  /* Overwriting default font system to use Poppins globally  */
   --font-sans: "Poppins", sans-serif;
 }
 
-/* Force consistent light aesthetic matching Nomichi house identity  */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #FFFBF5;
@@ -37,19 +31,4 @@ body {
   font-family: "Poppins", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.nomichi-select option {
-  background: #FFFBF5;
-  color: #1C1B1A;
-}
-
-.nomichi-select option:checked {
-  background: #1C1B1A;
-  color: #FFFBF5;
-}
-
-.nomichi-select:focus option:checked {
-  background: #1C1B1A;
-  color: #FFFBF5;
 }

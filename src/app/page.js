@@ -14,11 +14,6 @@ const initialFormData = {
   note: "",
 };
 
-// const fieldClass =
-//   "w-full rounded-2xl border border-[#D1B788]/75 bg-[#FFFBF5] px-4 py-3.5 text-[15px] font-semibold text-[#1C1B1A] outline-none transition placeholder:text-[#1C1B1A]/38 focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/10";
-
-// const labelClass = "mb-2 block text-sm font-medium text-[#1C1B1A]";
-
 const labelClass =
   "block text-[11px] font-semibold tracking-[0.12em] uppercase text-[#1C1B1A]/50 mb-1.5 font-poppins";
 const fieldClass =
@@ -238,7 +233,6 @@ export default function PublicLeadCapturePage() {
       className="min-h-screen overflow-x-hidden bg-[#FFFBF5] text-[#1C1B1A]"
       style={{ fontFamily: '"Poppins", sans-serif' }}
     >
-      {/* Navigation */}
       <nav className="relative z-50 bg-[#FFFBF5]">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-10 lg:px-12">
           <Link
@@ -282,7 +276,6 @@ export default function PublicLeadCapturePage() {
         />
       </nav>
 
-      {/* Hero Section */}
       <section className="relative mx-auto max-w-7xl px-6 pt-10 pb-14 sm:px-10 md:pt-14 lg:px-12">
         <div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12 lg:gap-16">
           <div className="relative z-20 flex w-full max-w-[540px] flex-col justify-center py-6 lg:col-span-6">
@@ -338,7 +331,7 @@ export default function PublicLeadCapturePage() {
                 src="/hero-traveler.png"
                 alt="Nomichi Traveler"
                 fill
-                priority // High priority loading for LCP element
+                priority
                 sizes="(max-w-lg) 100vw, 50vw"
                 className="object-contain object-bottom select-none drop-shadow-2xl"
               />
@@ -347,7 +340,6 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-12">
         <div className="rounded-[40px] bg-[#F4EFE6] p-8 sm:p-12 lg:p-16">
           <div className="grid gap-12 md:grid-cols-3 md:gap-8 lg:gap-12">
@@ -360,7 +352,7 @@ export default function PublicLeadCapturePage() {
               [
                 "02",
                 "Scouted by real feet",
-                "Every homestay, secret viewpoint, and native host is personally vetted by us. No algorithmic recommendations—just pure, lived experiences.",
+                "Every homestay, secret viewpoint, and native host is personally vetted by us. No algorithmic recommendations, just pure, lived experiences.",
               ],
               [
                 "03",
@@ -390,14 +382,12 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      {/* Open Trips Section */}
       <section
         id="journeys"
         ref={journeysRef}
         className="scroll-mt-24 bg-[#FFFBF5] py-14"
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12">
-          {/* Header Section */}
           <div className="mb-12 flex flex-col justify-between gap-4 border-b border-[#1C1B1A]/10 pb-6 md:flex-row md:items-end">
             <div>
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
@@ -414,7 +404,6 @@ export default function PublicLeadCapturePage() {
             </div>
           </div>
 
-          {/* Content States */}
           {tripsLoading ? (
             <div className="rounded-[24px] border border-[#1C1B1A]/10 bg-[#FFFBF5] p-8 text-center text-sm font-normal text-[#1C1B1A]/65">
               Fetching our upcoming seasonal schedules...
@@ -511,7 +500,6 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      {/* Enquiry Form Section */}
       <section
         id="enquiry"
         ref={enquiryRef}
@@ -519,7 +507,6 @@ export default function PublicLeadCapturePage() {
       >
         <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12 ">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 items-start">
-            {/* Left Column */}
             <div className="lg:sticky lg:top-32">
               <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
                 Send an Enquiry
@@ -534,7 +521,6 @@ export default function PublicLeadCapturePage() {
               </p>
             </div>
 
-            {/* Right Column - Premium Clean Form Card */}
             <div className="rounded-[28px] border border-[#D1B788]/25 bg-[#F4EFE6] p-6 sm:p-10 shadow-[0_24px_68px_-20px_rgba(28,27,26,0.05)] font-poppins">
               {success ? (
                 <div className="rounded-[20px] bg-white/60 p-8 text-center md:py-12">
@@ -557,7 +543,6 @@ export default function PublicLeadCapturePage() {
                     </div>
                   ) : null}
 
-                  {/* Full Name */}
                   <div>
                     <label htmlFor="name" className={labelClass}>
                       Your name
@@ -574,7 +559,6 @@ export default function PublicLeadCapturePage() {
                     />
                   </div>
 
-                  {/* Phone Field with Custom Elegant Layout */}
                   <div>
                     <label htmlFor="phone" className={labelClass}>
                       Phone
@@ -638,7 +622,6 @@ export default function PublicLeadCapturePage() {
                     </div>
                   </div>
 
-                  {/* Email Address */}
                   <div>
                     <label htmlFor="email" className={labelClass}>
                       Email, optional
@@ -655,7 +638,6 @@ export default function PublicLeadCapturePage() {
                     />
                   </div>
 
-                  {/* Which Trip Dropdown - Styled Custom Arrow */}
                   <div>
                     <label htmlFor="trip_id" className={labelClass}>
                       Which trip
@@ -733,7 +715,6 @@ export default function PublicLeadCapturePage() {
                     </div>
                   </div>
 
-                  {/* Who is Travelling Dropdown */}
                   <div>
                     <label htmlFor="group_type" className={labelClass}>
                       Who is travelling
@@ -806,7 +787,6 @@ export default function PublicLeadCapturePage() {
                     </div>
                   </div>
 
-                  {/* Textarea Description Notes */}
                   <div>
                     <label htmlFor="note" className={labelClass}>
                       What are you hoping this trip feels like?
@@ -822,7 +802,6 @@ export default function PublicLeadCapturePage() {
                     />
                   </div>
 
-                  {/* Premium Elegant Action Button */}
                   <div className="pt-2">
                     <button
                       type="submit"
@@ -839,12 +818,9 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      {/* Footer Section */}
       <footer className="w-full bg-[#1C1B1A] pt-20 pb-12 text-[#FFFBF5] font-poppins">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Upper Grid */}
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-end">
-            {/* Column 1: Brand & Philosophy */}
             <div className="space-y-4">
               <span className="text-3xl font-medium tracking-[0.1em] text-white uppercase">
                 Nomichi
@@ -855,7 +831,6 @@ export default function PublicLeadCapturePage() {
               </p>
             </div>
 
-            {/* Column 2: Big Bold Statement */}
             <div className="lg:col-span-2 lg:text-right">
               <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#D55D27] mb-2">
                 Beyond Itineraries
@@ -872,9 +847,7 @@ export default function PublicLeadCapturePage() {
 
           <div className="mt-16 border-t border-[#FFFBF5]/10" />
 
-          {/* Bottom Bar: Links & Copyright */}
           <div className="mt-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between text-[11px] tracking-widest uppercase">
-            {/* Left: Quick Actions - Links fixed to prevent dead anchors */}
             <div className="flex gap-8 text-[#FFFBF5]/60">
               <a
                 href="#enquiry"
@@ -902,7 +875,6 @@ export default function PublicLeadCapturePage() {
               </a>
             </div>
 
-            {/* Right: Credits */}
             <p className="text-[#FFFBF5]/40 font-light normal-case tracking-normal">
               &copy; {new Date().getFullYear()} Nomichi Explorers India. All
               rights reserved.

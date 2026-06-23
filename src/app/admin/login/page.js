@@ -1,8 +1,8 @@
-// src/app/admin/login/page.js
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/utils/supabaseBrowser";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -16,21 +16,34 @@ export default function AdminLogin() {
     setError("");
     setSubmitting(true);
 
-    setTimeout(() => {
-      if (email === "admin@nomichi.com" && password === "nomichi2026") { 
-        localStorage.setItem("isAdminAuthenticated", "true");
-        router.push("/admin");
-      } else {
-        setError("Invalid email registry or security passphrase.");
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error: signInError } = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise((resolve) => {
+          setTimeout(() => resolve({ error: new Error("Authentication timed out") }), 10000);
+        }),
+      ]);
+
+      if (signInError) {
+        setError("Invalid email or password.");
         setSubmitting(false);
+        return;
       }
-    }, 800);
+
+      router.push("/admin/dashboard");
+    } catch {
+      setError("Could not reach authentication. Please try again.");
+      setSubmitting(false);
+    }
   };
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-[#FFFBF5] px-6 py-12 font-poppins text-[#1C1B1A]">
       
-      {/* Back button  */}
       <div className="absolute top-8 left-6 sm:left-10 lg:left-12">
         <Link 
           href="/" 
@@ -42,9 +55,8 @@ export default function AdminLogin() {
 
       <div className="w-full max-w-[460px] rounded-[36px] bg-[#F4EFE6] p-10 sm:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
         
-        {/* Card Header */}
         <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-1 font-serif text-3xl font-light tracking-[0.2em] text-[#1C1B1A]">
+          <div className="inline-flex items-center gap-1 text-3xl font-light tracking-[0.2em] text-[#1C1B1A]">
             <span>NOMICHI</span>
             <span className="mt-1 h-2 w-2 rounded-full bg-[#D55D27]" aria-hidden="true" />
           </div>
@@ -56,7 +68,6 @@ export default function AdminLogin() {
           </h2>
         </div>
 
-        {/* Login */}
         <form onSubmit={handleLogin} className="space-y-5">
           {error && (
             <div className="rounded-xl border border-[#D55D27]/20 bg-[#FFFBF5] p-3 text-xs font-medium text-[#D55D27] text-center">
@@ -64,7 +75,6 @@ export default function AdminLogin() {
             </div>
           )}
 
-          {/* 1. Email */}
           <div>
             <label 
               htmlFor="admin-email" 
@@ -79,12 +89,12 @@ export default function AdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/30"
               placeholder="name@nomichi.com"
+              autoComplete="email"
               disabled={submitting}
               required
             />
           </div>
 
-          {/* 2. Password Input Box */}
           <div>
             <label 
               htmlFor="admin-password" 
@@ -98,7 +108,8 @@ export default function AdminLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/30"
-              placeholder="••••••••••••"
+              placeholder="Enter password"
+              autoComplete="current-password"
               disabled={submitting}
               required
             />
