@@ -24,7 +24,7 @@ export default function EnquiryForm({
     <section
       id="enquiry"
       ref={enquiryRef}
-      className="scroll-mt-24 bg-[#FFFBF5] pt-16 pb-28 w-full font-poppins"
+      className="scroll-mt-24 bg-[#FFFBF5] pt-12 pb-24 w-full font-poppins md:pt-16 md:pb-28"
     >
       <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12 ">
         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 items-start">
@@ -40,6 +40,38 @@ export default function EnquiryForm({
               This is not an automated booking flow. Your note helps our team
               understand the trip, pace, and group style that would suit you.
             </p>
+            <div className="mt-10 grid max-w-md gap-4 sm:grid-cols-2 lg:grid-cols-1">
+              {[
+                [
+                  "01",
+                  "A real person reads it",
+                  "We look at your pace, comfort, and the kind of group you want.",
+                ],
+                [
+                  "02",
+                  "We guide the next step",
+                  "You will hear from the team with the most suitable route or opening.",
+                ],
+              ].map(([number, title, copy]) => (
+                <div
+                  key={title}
+                  className="rounded-[22px] border border-[#D1B788]/35 bg-[#F4EFE6]/55 p-5"
+                >
+                  <div className="mb-4 flex items-center justify-between gap-4">
+                    <span className="h-px w-10 bg-[#D55D27]/40" />
+                    <span className="text-xl font-light italic text-[#D55D27]/35">
+                      {number}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-medium text-[#1C1B1A]">
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-xs font-light leading-6 text-[#1C1B1A]/62">
+                    {copy}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="rounded-[28px] border border-[#D1B788]/25 bg-[#F4EFE6] p-6 sm:p-10 shadow-[0_24px_68px_-20px_rgba(28,27,26,0.05)] font-poppins">

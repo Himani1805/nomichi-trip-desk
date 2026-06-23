@@ -5,8 +5,7 @@ export const ALLOWED_PIPELINE_STAGES = [
   'NEW',
   'CONTACTED',
   'QUALIFIED',
-  'VIBE CHECK',
-  'SENT',
+  'VIBE CHECK SENT',
   'CONFIRMED',
   'NOT A FIT',
 ];
@@ -14,8 +13,8 @@ export const ALLOWED_PIPELINE_STAGES = [
 export function normalizePipelineStage(value) {
   const normalized = String(value || 'NEW').trim().toUpperCase();
 
-  if (normalized === 'VIBE CHECK SENT') {
-    return 'VIBE CHECK';
+  if (normalized === 'VIBE CHECK' || normalized === 'SENT') {
+    return 'VIBE CHECK SENT';
   }
 
   if (ALLOWED_PIPELINE_STAGES.includes(normalized)) {
@@ -26,7 +25,7 @@ export function normalizePipelineStage(value) {
 }
 
 export function isAllowedPipelineStage(value) {
-  return ALLOWED_PIPELINE_STAGES.includes(String(value || '').trim().toUpperCase());
+  return ALLOWED_PIPELINE_STAGES.includes(normalizePipelineStage(value));
 }
 
 export function unauthorizedResponse() {

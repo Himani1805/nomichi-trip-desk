@@ -30,8 +30,8 @@ export async function GET(request) {
 
     if (status) {
       const normalizedStatus = normalizePipelineStage(status);
-      if (normalizedStatus === 'VIBE CHECK') {
-        query = query.in('status', ['VIBE CHECK', 'VIBE CHECK SENT']);
+      if (normalizedStatus === 'VIBE CHECK SENT') {
+        query = query.in('status', ['VIBE CHECK SENT', 'VIBE CHECK', 'SENT']);
       } else {
         query = query.eq('status', normalizedStatus);
       }

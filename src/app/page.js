@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import FloatingActions from "@/components/FloatingActions";
 import EnquiryForm from "@/components/public/EnquiryForm";
 import Footer from "@/components/public/Footer";
+import AboutNomichiSection from "@/components/public/AboutNomichiSection";
+import BannerSection from "@/components/public/BannerSection";
 import HeroSection from "@/components/public/HeroSection";
 import JourneySection from "@/components/public/JourneySection";
 
@@ -288,48 +290,50 @@ export default function PublicLeadCapturePage() {
 
       <section
         id="why-nomichi"
-        className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-12"
+        className="mx-auto max-w-7xl px-6 py-12 sm:px-10 md:py-14 lg:px-12"
       >
-        <div className="rounded-[40px] bg-[#F4EFE6] p-8 sm:p-12 lg:p-16">
-          <div className="grid gap-12 md:grid-cols-3 md:gap-8 lg:gap-12">
-            {[
-              [
-                "01",
-                "Not a checklist, an emotion",
-                "We swap rushed tourist traps for slower mornings, hidden local alleys, and days that let you actually breathe and absorb the destination.",
-              ],
-              [
-                "02",
-                "Scouted by real feet",
-                "Every homestay, secret viewpoint, and native host is personally vetted by us. No algorithmic recommendations, just pure, lived experiences.",
-              ],
-              [
-                "03",
-                "With you, all the way",
-                "We don’t just book tickets and disappear. From managing unexpected detours to finding a midnight local tea stall, our team is on the ground with you.",
-              ],
-            ].map(([number, title, copy]) => (
-              <article
-                key={title}
-                className="group relative flex flex-col pt-8"
-              >
-                <div className="absolute top-0 left-0 h-[1px] w-12 bg-[#D55D27]/40 transition-all duration-500 group-hover:w-full group-hover:bg-[#D55D27]" />
-                <div className="flex items-baseline justify-between gap-2">
-                  <h2 className="text-lg font-medium tracking-tight text-[#1C1B1A] sm:text-xl">
-                    {title}
-                  </h2>
-                  <span className="text-2xl font-light italic text-[#D55D27]/30 transition-colors duration-300 group-hover:text-[#D55D27]/80">
-                    {number}
-                  </span>
-                </div>
-                <p className="mt-4 text-[14px] leading-7 font-light text-[#1C1B1A]/70 antialiased">
-                  {copy}
-                </p>
-              </article>
-            ))}
-          </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {[
+            [
+              "01",
+              "Not a checklist, an emotion",
+              "We swap rushed tourist traps for slower mornings, hidden local alleys, and days that let you actually breathe and absorb the destination.",
+            ],
+            [
+              "02",
+              "Scouted by real feet",
+              "Every homestay, secret viewpoint, and native host is personally vetted by us. No algorithmic recommendations, just pure, lived experiences.",
+            ],
+            [
+              "03",
+              "With you, all the way",
+              "We do not just book tickets and disappear. From managing unexpected detours to finding a midnight local tea stall, our team is on the ground with you.",
+            ],
+          ].map(([number, title, copy]) => (
+            <article
+              key={title}
+              className="group relative rounded-[22px] border border-[#D1B788]/35 bg-[#FFFBF5]/62 p-6 pt-8 transition duration-300 hover:-translate-y-1 hover:border-[#D55D27]/35 hover:shadow-[0_24px_60px_-48px_rgba(28,27,26,0.42)]"
+            >
+              <div className="absolute left-6 top-6 h-px w-12 bg-[#D55D27]/40 transition-all duration-500 group-hover:w-24 group-hover:bg-[#D55D27]" />
+              <div className="mt-8 flex items-baseline justify-between gap-5">
+                <h2 className="text-lg font-medium tracking-tight text-[#1C1B1A] sm:text-xl">
+                  {title}
+                </h2>
+                <span className="shrink-0 text-2xl font-light italic text-[#D55D27]/30 transition-colors duration-300 group-hover:text-[#D55D27]/80">
+                  {number}
+                </span>
+              </div>
+              <p className="mt-4 text-[14px] font-light leading-7 text-[#1C1B1A]/70 antialiased">
+                {copy}
+              </p>
+            </article>
+          ))}
         </div>
       </section>
+
+      <BannerSection />
+
+      <AboutNomichiSection />
 
       <JourneySection
         journeysRef={journeysRef}
@@ -371,3 +375,4 @@ export default function PublicLeadCapturePage() {
     </main>
   );
 }
+

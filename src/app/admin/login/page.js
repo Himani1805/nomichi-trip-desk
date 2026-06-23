@@ -64,7 +64,7 @@ export default function AdminLogin() {
             Nomichi Trip Desk
           </p>
           <h2 className="mt-1 text-sm font-light text-[#1C1B1A]/50">
-            Please sign in to manage Nomichi properties
+            Please sign in to manage traveller enquiries
           </h2>
         </div>
 

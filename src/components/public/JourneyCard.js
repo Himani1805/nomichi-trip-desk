@@ -19,6 +19,12 @@ export default function JourneyCard({
       : totalSeats
         ? `${totalSeats} curated seats`
         : "Small group seats";
+  const statusText =
+    seatsLeft !== undefined && seatsLeft !== null && Number(seatsLeft) <= 3
+      ? "Few seats"
+      : String(trip?.status || "open").toLowerCase() === "open"
+        ? "Open"
+        : "Closed";
 
   return (
     <article
@@ -56,13 +62,9 @@ export default function JourneyCard({
           </p>
         </div>
 
-        {imageSource ? (
-          <span className="mt-1 shrink-0 rounded-full border border-[#D1B788]/50 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#1C1B1A]/50">
-            {formatTripDates(trip)}
-          </span>
-        ) : (
-          <span className="hidden h-14 w-14 shrink-0 rounded-full border border-[#D1B788]/45 bg-[#F4EFE6] sm:block" />
-        )}
+        <span className="mt-1 shrink-0 rounded-full border border-[#D1B788]/50 bg-[#F4EFE6]/70 px-3.5 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[#1C1B1A]/55">
+          {imageSource ? formatTripDates(trip) : statusText}
+        </span>
       </div>
 
       <p className="mt-6 text-[15px] leading-7 font-light text-[#1C1B1A]/68">

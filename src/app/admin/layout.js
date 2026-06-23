@@ -75,8 +75,16 @@ export default function AdminLayout({ children }) {
   ];
 
   const handleLogout = async () => {
-    await getSupabaseBrowserClient().auth.signOut();
-    router.push('/admin/login');
+    try {
+      await Promise.race([
+        getSupabaseBrowserClient().auth.signOut(),
+        new Promise((resolve) => {
+          setTimeout(resolve, 5000);
+        }),
+      ]);
+    } finally {
+      router.replace('/admin/login');
+    }
   };
 
   if (checkingSession) {

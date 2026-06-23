@@ -8,8 +8,7 @@ const JOURNEY_STAGES = [
   'NEW',
   'CONTACTED',
   'QUALIFIED',
-  'VIBE CHECK',
-  'SENT',
+  'VIBE CHECK SENT',
   'CONFIRMED',
   'NOT A FIT',
 ];
@@ -20,9 +19,11 @@ export default function AdminDashboard() {
   const [recentLeads, setRecentLeads] = useState([]);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     async function loadDashboard() {
+      setLoadError('');
       try {
         const [metricsResponse, leadsResponse, tripsResponse] = await Promise.all([
           adminFetch('/api/admin/metrics'),
@@ -34,11 +35,20 @@ export default function AdminDashboard() {
         const leadsJson = await leadsResponse.json();
         const tripsJson = await tripsResponse.json();
 
-        if (metricsJson.success) setMetrics(metricsJson.data);
-        if (leadsJson.success) setRecentLeads((leadsJson.data || []).slice(0, 5));
-        if (tripsJson.success) setTrips(tripsJson.data || []);
+        if (!metricsResponse.ok || !leadsResponse.ok || !tripsResponse.ok) {
+          throw new Error('Could not load the admin overview. Please refresh your session.');
+        }
+
+        if (!metricsJson.success || !leadsJson.success || !tripsJson.success) {
+          throw new Error(metricsJson.error || leadsJson.error || tripsJson.error || 'Could not load the admin overview.');
+        }
+
+        setMetrics(metricsJson.data);
+        setRecentLeads((leadsJson.data || []).slice(0, 5));
+        setTrips(tripsJson.data || []);
       } catch (err) {
         console.error('Failed to load dashboard:', err);
+        setLoadError(err.message || 'Could not load the admin overview.');
       } finally {
         setLoading(false);
       }
@@ -96,6 +106,12 @@ export default function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-3xl border border-[#D55D27]/20 bg-[#FFFBF5] p-5 text-sm font-light text-[#1C1B1A]">
+          {loadError}
+        </div>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm">

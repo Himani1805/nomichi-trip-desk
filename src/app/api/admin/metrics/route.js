@@ -6,8 +6,7 @@ const PIPELINE_STAGES = [
   'NEW',
   'CONTACTED',
   'QUALIFIED',
-  'VIBE CHECK',
-  'SENT',
+  'VIBE CHECK SENT',
   'CONFIRMED',
   'NOT A FIT',
 ];
@@ -19,8 +18,8 @@ export async function GET(request) {
 
     await supabase
       .from('enquiries')
-      .update({ status: 'VIBE CHECK' })
-      .eq('status', 'VIBE CHECK SENT');
+      .update({ status: 'VIBE CHECK SENT' })
+      .in('status', ['VIBE CHECK', 'SENT']);
 
     const { data: enquiries, error: enquiriesError } = await supabase
       .from('enquiries')

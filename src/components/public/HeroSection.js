@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function HeroSection({ enquiryRef, journeysRef, scrollTo }) {
   return (
-    <section className="relative mx-auto max-w-7xl px-6 pt-10 pb-14 sm:px-10 md:pt-14 lg:px-12">
+    <section className="relative mx-auto max-w-7xl px-6 pt-10 pb-10 sm:px-10 md:pt-14 md:pb-12 lg:px-12">
       <div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-12 lg:gap-16">
         <div className="relative z-20 flex w-full max-w-[540px] flex-col justify-center py-6 lg:col-span-6">
           <p className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#D55D27]">
@@ -49,17 +49,19 @@ export default function HeroSection({ enquiryRef, journeysRef, scrollTo }) {
           </div>
         </div>
 
-        <div className="relative flex min-h-[460px] lg:min-h-[500px] w-full items-stretch justify-center lg:col-span-6 overflow-visible">
-          <div className="pointer-events-none absolute inset-0 z-0 rounded-tl-[72px] rounded-tr-[138px] rounded-br-[32px] rounded-bl-[72px] bg-[#F4EFE6]" />
-
-          <div className="pointer-events-none absolute -bottom-[15px] z-20 h-[135%] md:h-[145%] w-[120%] select-none">
+        <div className="relative flex min-h-[460px] w-full items-stretch justify-center overflow-visible lg:col-span-6 lg:min-h-[500px]">
+          <div className="relative w-full overflow-hidden rounded-tl-[72px] rounded-tr-[138px] rounded-br-[32px] rounded-bl-[72px] border border-[#D1B788]/25 bg-[#F4EFE6] shadow-[0_28px_90px_-62px_rgba(28,27,26,0.48)]">
             <Image
-              src="/hero-traveler.png"
-              alt="Nomichi Traveler"
+              src="/hero-nomichi-travelers-hd.png"
+              alt="Two Nomichi travellers walking through a warm old street"
               fill
               priority
-              sizes="(max-w-lg) 100vw, 50vw"
-              className="object-contain object-bottom select-none drop-shadow-2xl"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover object-center"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#FFFBF5]/8 via-transparent to-[#1C1B1A]/12"
+              aria-hidden="true"
             />
           </div>
         </div>

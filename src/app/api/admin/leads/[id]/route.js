@@ -51,7 +51,7 @@ export async function PATCH(request, { params }) {
     const updateData = {};
 
     if (body.status !== undefined) {
-      if (!isAllowedPipelineStage(body.status) && body.status !== 'VIBE CHECK SENT') {
+      if (!isAllowedPipelineStage(body.status)) {
         return NextResponse.json({ success: false, error: 'Invalid pipeline stage' }, { status: 400 });
       }
       updateData.status = normalizePipelineStage(body.status);

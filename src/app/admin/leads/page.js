@@ -8,8 +8,7 @@ const ALLOWED_STAGES = [
   'NEW',
   'CONTACTED',
   'QUALIFIED',
-  'VIBE CHECK',
-  'SENT',
+  'VIBE CHECK SENT',
   'CONFIRMED',
   'NOT A FIT',
 ];
@@ -32,6 +31,7 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [tripFilter, setTripFilter] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     async function loadTrips() {
@@ -50,6 +50,7 @@ export default function LeadsPage() {
   useEffect(() => {
     async function loadLeads() {
       setLoading(true);
+      setLoadError('');
       try {
         const queryParams = new URLSearchParams();
         if (search.trim()) queryParams.append('search', search.trim());
@@ -59,9 +60,13 @@ export default function LeadsPage() {
 
         const response = await adminFetch(`/api/admin/leads?${queryParams.toString()}`);
         const json = await response.json();
-        setLeads(json.success ? json.data || [] : []);
+        if (!response.ok || !json.success) {
+          throw new Error(json.error || 'Could not load traveller enquiries.');
+        }
+        setLeads(json.data || []);
       } catch (err) {
         console.error('Failed to load leads:', err);
+        setLoadError(err.message || 'Could not load traveller enquiries.');
         setLeads([]);
       } finally {
         setLoading(false);
@@ -129,6 +134,7 @@ export default function LeadsPage() {
               Search name, email, or phone
             </span>
             <input
+              aria-label="Search leads by name email or phone"
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -142,6 +148,7 @@ export default function LeadsPage() {
               Journey stage
             </span>
             <select
+              aria-label="Filter leads by journey stage"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-4 text-sm font-light outline-none transition focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
@@ -158,6 +165,7 @@ export default function LeadsPage() {
               Journey
             </span>
             <select
+              aria-label="Filter leads by journey"
               value={tripFilter}
               onChange={(e) => setTripFilter(e.target.value)}
               className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-4 text-sm font-light outline-none transition focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
@@ -174,6 +182,7 @@ export default function LeadsPage() {
               Owner
             </span>
             <select
+              aria-label="Filter leads by owner"
               value={ownerFilter}
               onChange={(e) => setOwnerFilter(e.target.value)}
               className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-4 text-sm font-light outline-none transition focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
@@ -186,6 +195,12 @@ export default function LeadsPage() {
           </label>
         </div>
       </section>
+
+      {loadError && (
+        <div className="rounded-3xl border border-[#D55D27]/20 bg-[#FFFBF5] p-5 text-sm font-light text-[#1C1B1A]">
+          {loadError}
+        </div>
+      )}
 
       <section className="rounded-3xl border border-[#1C1B1A]/5 bg-white shadow-sm">
         <div className="flex flex-col gap-2 border-b border-[#1C1B1A]/5 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -239,6 +254,7 @@ export default function LeadsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <select
+                          aria-label={`Update status for ${lead.name || 'traveller'}`}
                           value={lead.status || 'NEW'}
                           disabled={updatingId === lead.id}
                           onChange={(e) => updateLead(lead.id, { status: e.target.value })}
@@ -251,6 +267,7 @@ export default function LeadsPage() {
                       </td>
                       <td className="px-5 py-4">
                         <select
+                          aria-label={`Assign curator for ${lead.name || 'traveller'}`}
                           value={lead.assigned_owner || 'Unassigned'}
                           disabled={updatingId === lead.id}
                           onChange={(e) => updateLead(lead.id, { owner: e.target.value === 'Unassigned' ? null : e.target.value })}
@@ -291,6 +308,7 @@ export default function LeadsPage() {
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <select
+                      aria-label={`Update status for ${lead.name || 'traveller'}`}
                       value={lead.status || 'NEW'}
                       disabled={updatingId === lead.id}
                       onChange={(e) => updateLead(lead.id, { status: e.target.value })}
@@ -301,6 +319,7 @@ export default function LeadsPage() {
                       ))}
                     </select>
                     <select
+                      aria-label={`Assign curator for ${lead.name || 'traveller'}`}
                       value={lead.assigned_owner || 'Unassigned'}
                       disabled={updatingId === lead.id}
                       onChange={(e) => updateLead(lead.id, { owner: e.target.value === 'Unassigned' ? null : e.target.value })}

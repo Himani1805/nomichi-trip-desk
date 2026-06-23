@@ -3,7 +3,7 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminFetch } from '@/utils/adminApi';
 
-const ALLOWED_STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'VIBE CHECK', 'SENT', 'CONFIRMED', 'NOT A FIT'];
+const ALLOWED_STAGES = ['NEW', 'CONTACTED', 'QUALIFIED', 'VIBE CHECK SENT', 'CONFIRMED', 'NOT A FIT'];
 
 const AVAILABLE_OWNERS = [
   'Unassigned',
@@ -135,6 +135,11 @@ export default function LeadDetailPage({ params: paramsPromise }) {
   if (loading) return <div className="text-sm font-light">Loading traveller profile...</div>;
   if (!lead) return <div className="text-sm text-[#1C1B1A]">Lead not found.</div>;
 
+  const submittedAt = lead.created_at ? new Date(lead.created_at).toLocaleString() : 'Not available';
+  const selectedJourney = lead.trips?.name || lead.trip_interest || 'General interest';
+  const selectedDestination = lead.trips?.destination || lead.destination || 'Not shared';
+  const travellerNote = lead.note || lead.message || lead.travel_feeling || 'No trip feeling note shared yet.';
+
   return (
     <div className="font-poppins text-[#1C1B1A]">
       <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -150,7 +155,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
           <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
             <div>
               <h1 className="text-2xl font-light tracking-tight">{lead.name || 'Traveller'}</h1>
-              <p className="text-sm text-[#1C1B1A]/50 font-light mt-1">{lead.email}</p>
+              <p className="text-sm text-[#1C1B1A]/50 font-light mt-1">{lead.email || 'No email shared'}</p>
             </div>
             <hr className="border-[#1C1B1A]/5" />
             <div className="grid grid-cols-1 gap-6 text-sm sm:grid-cols-2">
@@ -160,8 +165,28 @@ export default function LeadDetailPage({ params: paramsPromise }) {
               </div>
               <div>
                 <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Destination</span>
-                <span className="font-light">{lead.trips?.destination || lead.trips?.name || lead.destination || lead.trip_interest || 'N/A'}</span>
+                <span className="font-light">{selectedDestination}</span>
               </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Selected Journey</span>
+                <span className="font-light">{selectedJourney}</span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Group Type</span>
+                <span className="font-light">{lead.group_type || 'Not shared'}</span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Preferred Month</span>
+                <span className="font-light">{lead.preferred_month || 'Not shared'}</span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Submitted</span>
+                <span className="font-light">{submittedAt}</span>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4">
+              <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-2">What they are hoping this trip feels like</span>
+              <p className="text-sm font-light leading-relaxed text-[#1C1B1A]/75 whitespace-pre-wrap">{travellerNote}</p>
             </div>
           </div>
 
@@ -212,6 +237,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-3">Journey Stage</h3>
             <div className="relative">
               <select
+                aria-label="Update journey stage"
                 value={lead.status || 'NEW'}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 disabled={updating}
@@ -231,6 +257,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-3">Curator</h3>
             <div className="relative">
               <select
+                aria-label="Assign curator"
                 value={lead.assigned_owner || 'Unassigned'}
                 onChange={(e) => handleOwnerChange(e.target.value)}
                 disabled={ownerUpdating}
