@@ -43,7 +43,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
         if (notesResult.success) setNotes(notesResult.data || []);
         
       } catch (err) {
-        console.error("Error loading workspace data:", err);
+        console.error('Error loading lead data:', err);
       } finally {
         setLoading(false);
       }
@@ -132,28 +132,28 @@ export default function LeadDetailPage({ params: paramsPromise }) {
     }
   };
 
-  if (loading) return <div className="p-8 text-sm font-light">Loading Lead Workspace...</div>;
-  if (!lead) return <div className="p-8 text-sm text-red-500">Lead not found.</div>;
+  if (loading) return <div className="text-sm font-light">Loading traveller profile...</div>;
+  if (!lead) return <div className="text-sm text-[#1C1B1A]">Lead not found.</div>;
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5] p-8 font-poppins text-[#1C1B1A]">
-      <div className="mb-8 flex items-center justify-between">
-        <button onClick={() => router.push('/admin/dashboard')} className="text-xs tracking-widest uppercase text-[#1C1B1A]/60 hover:text-[#D55D27]">
-          &larr; Back to Dashboard
+    <div className="font-poppins text-[#1C1B1A]">
+      <div className="mb-6 flex flex-col gap-3 rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <button onClick={() => router.push('/admin/leads')} className="min-h-11 w-fit rounded-xl border border-[#1C1B1A]/10 px-4 text-xs tracking-widest uppercase text-[#1C1B1A]/60 hover:text-[#1C1B1A]">
+          &larr; Back to Leads
         </button>
-        <span className="text-xs uppercase bg-[#D55D27]/10 text-[#D55D27] px-3 py-1 rounded-full font-medium">Workspace Active</span>
+        <span className="text-xs uppercase bg-[#D55D27]/10 text-[#D55D27] px-3 py-1 rounded-full font-medium">Traveller Profile</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
             <div>
-              <h1 className="text-2xl font-light tracking-tight">{lead.name || 'Anonymous User'}</h1>
+              <h1 className="text-2xl font-light tracking-tight">{lead.name || 'Traveller'}</h1>
               <p className="text-sm text-[#1C1B1A]/50 font-light mt-1">{lead.email}</p>
             </div>
             <hr className="border-[#1C1B1A]/5" />
-            <div className="grid grid-cols-2 gap-6 text-sm">
+            <div className="grid grid-cols-1 gap-6 text-sm sm:grid-cols-2">
               <div>
                 <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-1">Phone</span>
                 <span className="font-light">{lead.phone || 'Not Provided'}</span>
@@ -166,31 +166,31 @@ export default function LeadDetailPage({ params: paramsPromise }) {
           </div>
 
           <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
-            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27]">Call Notes / Touchpoints</h3>
+            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A]">Notes and call history</h3>
             
             <form onSubmit={handleAddNote} className="space-y-3">
               <textarea
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Log call details, user preferences, or follow-up timelines..."
+                placeholder="Add preferences, call notes, or follow-up timing."
                 rows={3}
-                className="w-full bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#D55D27] placeholder-[#1C1B1A]/30 resize-none font-light"
+                className="w-full bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5 placeholder-[#1C1B1A]/30 resize-none font-light"
               />
               <div className="flex justify-end">
                 <button
                   type="submit"
                   disabled={notesLoading || !newNote.trim()}
-                  className="rounded-lg bg-[#1C1B1A] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#D55D27] disabled:opacity-40 transition-colors"
+                  className="min-h-11 rounded-lg bg-[#D55D27] px-4 text-xs font-semibold uppercase tracking-wider text-[#FFFBF5] hover:bg-[#1C1B1A] disabled:opacity-40 transition-colors"
                 >
-                  {notesLoading ? 'Saving...' : 'Add Log Entry'}
+                  {notesLoading ? 'Saving...' : 'Add Note'}
                 </button>
               </div>
             </form>
 
             <div className="space-y-4 pt-2">
-              <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40">History Timeline</span>
+              <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40">Conversation history</span>
               {notes.length === 0 ? (
-                <p className="text-xs text-[#1C1B1A]/40 font-light italic">No timeline interactions logged yet.</p>
+                <p className="text-xs text-[#1C1B1A]/40 font-light italic">No notes added yet.</p>
               ) : (
                 <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                   {notes.map((note) => (
@@ -209,41 +209,41 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
         <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
           <div>
-            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-3">Pipeline Status</h3>
+            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-3">Journey Stage</h3>
             <div className="relative">
               <select
                 value={lead.status || 'NEW'}
                 onChange={(e) => handleStatusChange(e.target.value)}
                 disabled={updating}
-                className="w-full appearance-none bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D55D27] disabled:opacity-50"
+                className="min-h-11 w-full appearance-none bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D55D27] disabled:opacity-50"
               >
                 {ALLOWED_STAGES.map((stage) => (
                   <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
-              {updating && <span className="absolute right-3 top-3.5 text-[9px] text-[#D55D27] animate-pulse">Saving...</span>}
+              {updating && <span className="absolute right-3 top-3.5 text-[9px] text-[#1C1B1A] animate-pulse">Saving...</span>}
             </div>
           </div>
           
           <hr className="border-[#1C1B1A]/5" />
           
           <div>
-            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-3">Lead Assignment</h3>
+            <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-3">Curator</h3>
             <div className="relative">
               <select
                 value={lead.assigned_owner || 'Unassigned'}
                 onChange={(e) => handleOwnerChange(e.target.value)}
                 disabled={ownerUpdating}
-                className="w-full appearance-none bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D55D27] disabled:opacity-50 font-light"
+                className="min-h-11 w-full appearance-none bg-[#FFFBF5] border border-[#1C1B1A]/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D55D27] disabled:opacity-50 font-light"
               >
                 {AVAILABLE_OWNERS.map((owner) => (
                   <option key={owner} value={owner}>{owner}</option>
                 ))}
               </select>
-              {ownerUpdating && <span className="absolute right-3 top-3.5 text-[9px] text-[#D55D27] animate-pulse">Updating...</span>}
+              {ownerUpdating && <span className="absolute right-3 top-3.5 text-[9px] text-[#1C1B1A] animate-pulse">Updating...</span>}
             </div>
             <p className="mt-2 text-[10px] font-light text-[#1C1B1A]/40 leading-relaxed">
-              Assign a dedicated curator to handle this enquiry pipeline.
+              Choose the person who will guide this traveller.
             </p>
           </div>
 
@@ -251,7 +251,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
           <div className="space-y-4">
             <div>
-              <h3 className="text-xs uppercase tracking-widest font-semibold text-[#D55D27] mb-2">WhatsApp Draft</h3>
+              <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-2">First reply draft</h3>
               <p className="text-[10px] font-light text-[#1C1B1A]/40 leading-relaxed">
                 Generate a warm first response based on the enquiry note and selected journey.
               </p>
@@ -260,12 +260,12 @@ export default function LeadDetailPage({ params: paramsPromise }) {
               type="button"
               onClick={handleGenerateAiInsights}
               disabled={aiLoading}
-              className="w-full rounded-lg bg-[#1C1B1A] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white hover:bg-[#D55D27] disabled:opacity-40 transition-colors"
+              className="min-h-11 w-full rounded-lg bg-[#D55D27] px-4 text-xs font-semibold uppercase tracking-wider text-[#FFFBF5] hover:bg-[#1C1B1A] disabled:opacity-40 transition-colors"
             >
               {aiLoading ? 'Generating...' : 'Generate Draft'}
             </button>
             {aiError && (
-              <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
+              <p className="rounded-xl border border-[#1C1B1A]/25 bg-[#FFFBF5] p-3 text-xs text-[#1C1B1A]">
                 {aiError}
               </p>
             )}

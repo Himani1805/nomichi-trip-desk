@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import FloatingActions from "@/components/FloatingActions";
 
 const initialFormData = {
   name: "",
@@ -237,7 +238,7 @@ export default function PublicLeadCapturePage() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 sm:px-10 lg:px-12">
           <Link
             href="/"
-            className="group inline-flex items-center gap-1 text-2xl font-light tracking-[0.22em] text-[#1C1B1A]"
+            className="group inline-flex min-h-11 items-center gap-1 text-2xl font-light tracking-[0.22em] text-[#1C1B1A]"
           >
             <span>NOMICHI</span>
             <span
@@ -249,14 +250,14 @@ export default function PublicLeadCapturePage() {
           <div className="flex items-center gap-4 sm:gap-8">
             <Link
               href="/admin"
-              className="hidden text-[13px] font-medium tracking-[0.08em] text-[#1C1B1A] transition hover:text-[#D55D27] sm:inline-flex"
+              className="hidden min-h-11 items-center text-[13px] font-medium tracking-[0.08em] text-[#1C1B1A] transition hover:text-[#D55D27] sm:inline-flex"
             >
               Admin Dashboard
             </Link>
             <button
               type="button"
               onClick={() => scrollTo(enquiryRef)}
-              className="rounded-md border border-[#D55D27] px-5 py-2.5 text-[13px] font-semibold tracking-[0.06em] text-[#D55D27] transition hover:border-[#D55D27] hover:bg-[#D55D27] hover:text-[#FFFBF5] sm:px-7"
+              className="min-h-11 rounded-md border border-[#D55D27] px-5 py-2.5 text-[13px] font-semibold tracking-[0.06em] text-[#D55D27] transition hover:border-[#D55D27] hover:bg-[#D55D27] hover:text-[#FFFBF5] sm:px-7"
             >
               Enquire Now
             </button>
@@ -340,7 +341,7 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-12">
+      <section id="why-nomichi" className="mx-auto max-w-7xl px-6 py-16 sm:px-10 lg:px-12">
         <div className="rounded-[40px] bg-[#F4EFE6] p-8 sm:p-12 lg:p-16">
           <div className="grid gap-12 md:grid-cols-3 md:gap-8 lg:gap-12">
             {[
@@ -486,7 +487,7 @@ export default function PublicLeadCapturePage() {
                         <button
                           type="button"
                           onClick={() => selectJourney(trip.id)}
-                          className="mt-6 w-full rounded-xl border border-[#D55D27] bg-transparent px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#D55D27] transition-all duration-300 hover:bg-[#D55D27] hover:text-white"
+                          className="mt-6 min-h-11 w-full rounded-xl border border-[#D55D27] bg-transparent px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#D55D27] transition-all duration-300 hover:bg-[#D55D27] hover:text-white"
                         >
                           Request Invite
                         </button>
@@ -788,6 +789,22 @@ export default function PublicLeadCapturePage() {
                   </div>
 
                   <div>
+                    <label htmlFor="preferred_month" className={labelClass}>
+                      Preferred month, optional
+                    </label>
+                    <input
+                      id="preferred_month"
+                      name="preferred_month"
+                      type="text"
+                      value={formData.preferred_month}
+                      onChange={handleInputChange}
+                      className={fieldClass}
+                      placeholder="For example, October"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <div>
                     <label htmlFor="note" className={labelClass}>
                       What are you hoping this trip feels like?
                     </label>
@@ -818,7 +835,9 @@ export default function PublicLeadCapturePage() {
         </div>
       </section>
 
-      <footer className="w-full bg-[#1C1B1A] pt-20 pb-12 text-[#FFFBF5] font-poppins">
+      <FloatingActions />
+
+      <footer className="w-full bg-[#1C1B1A] pt-20 pb-28 text-[#FFFBF5] font-poppins sm:pb-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:items-end">
             <div className="space-y-4">
@@ -835,7 +854,7 @@ export default function PublicLeadCapturePage() {
               <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#D55D27] mb-2">
                 Beyond Itineraries
               </p>
-              <h2 className="text-3xl font-light tracking-tight sm:text-5xl text-white leading-tight">
+              <h2 className="text-3xl font-light tracking-tight sm:text-5xl text-[#FFFBF5] leading-tight">
                 Where curiosity meets <br className="hidden sm:inline" />
                 <span className="text-[#D55D27] font-normal">
                   thoughtful
@@ -857,19 +876,19 @@ export default function PublicLeadCapturePage() {
                     .getElementById("enquiry")
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="transition-colors duration-300 hover:text-[#D55D27] font-medium"
+                className="inline-flex min-h-11 items-center transition-colors duration-300 hover:text-[#D55D27] font-medium"
               >
                 Plan a Journey
               </a>
               <a
-                href="#enquiry"
+                href="#why-nomichi"
                 onClick={(e) => {
                   e.preventDefault();
                   document
-                    .getElementById("enquiry")
+                    .getElementById("why-nomichi")
                     ?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="transition-colors duration-300 hover:text-[#D55D27]"
+                className="inline-flex min-h-11 items-center transition-colors duration-300 hover:text-[#D55D27]"
               >
                 Our Story
               </a>

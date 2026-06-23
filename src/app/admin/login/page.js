@@ -47,7 +47,7 @@ export default function AdminLogin() {
       <div className="absolute top-8 left-6 sm:left-10 lg:left-12">
         <Link 
           href="/" 
-          className="text-xs font-medium uppercase tracking-[0.15em] text-[#1C1B1A]/50 transition-colors hover:text-[#D55D27]"
+          className="text-xs font-medium uppercase tracking-[0.15em] text-[#1C1B1A]/50 transition-colors hover:text-[#1C1B1A]"
         >
           &larr; Back to Public Desk
         </Link>
@@ -61,7 +61,7 @@ export default function AdminLogin() {
             <span className="mt-1 h-2 w-2 rounded-full bg-[#D55D27]" aria-hidden="true" />
           </div>
           <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
-            Internal Workspace
+            Nomichi Trip Desk
           </p>
           <h2 className="mt-1 text-sm font-light text-[#1C1B1A]/50">
             Please sign in to manage Nomichi properties
@@ -70,7 +70,7 @@ export default function AdminLogin() {
 
         <form onSubmit={handleLogin} className="space-y-5">
           {error && (
-            <div className="rounded-xl border border-[#D55D27]/20 bg-[#FFFBF5] p-3 text-xs font-medium text-[#D55D27] text-center">
+            <div className="rounded-xl border border-[#1C1B1A]/20 bg-[#FFFBF5] p-3 text-xs font-medium text-[#1C1B1A] text-center">
               {error}
             </div>
           )}
@@ -87,7 +87,7 @@ export default function AdminLogin() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/30"
+              className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/10"
               placeholder="name@nomichi.com"
               autoComplete="email"
               disabled={submitting}
@@ -107,7 +107,7 @@ export default function AdminLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/30"
+              className="w-full rounded-xl bg-[#FFFBF5] px-4 py-3.5 text-sm font-light text-[#1C1B1A] outline-none transition-all focus:ring-1 focus:ring-[#D55D27]/10"
               placeholder="Enter password"
               autoComplete="current-password"
               disabled={submitting}

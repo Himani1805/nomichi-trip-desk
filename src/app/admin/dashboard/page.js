@@ -1,288 +1,192 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { adminFetch } from '@/utils/adminApi';
 
-const ALLOWED_STAGES = [
+const JOURNEY_STAGES = [
   'NEW',
   'CONTACTED',
   'QUALIFIED',
   'VIBE CHECK',
   'SENT',
   'CONFIRMED',
-  'NOT A FIT'
-];
-
-const AVAILABLE_OWNERS = [
-  'Unassigned',
-  'Ananya Nair',
-  'Kabir Thapar',
-  'Rohan Mehta',
-  'Sarah Khan'
+  'NOT A FIT',
 ];
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [metrics, setMetrics] = useState(null);
-  const [leads, setLeads] = useState([]);
+  const [recentLeads, setRecentLeads] = useState([]);
   const [trips, setTrips] = useState([]);
-  const [loadingMetrics, setLoadingMetrics] = useState(true);
-  const [loadingLeads, setLoadingLeads] = useState(true);
-
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [tripFilter, setTripFilter] = useState('');
-  const [ownerFilter, setOwnerFilter] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTrips() {
+    async function loadDashboard() {
       try {
-        const res = await adminFetch('/api/admin/trips');
-        
-        const contentType = res.headers.get("content-type");
-        if (!res.ok || !contentType || !contentType.includes("application/json")) {
-          throw new Error('Trips response was not valid JSON');
-        }
-        
-        const result = await res.json();
-        if (result.success) setTrips(result.data || []);
+        const [metricsResponse, leadsResponse, tripsResponse] = await Promise.all([
+          adminFetch('/api/admin/metrics'),
+          adminFetch('/api/admin/leads'),
+          adminFetch('/api/admin/trips'),
+        ]);
+
+        const metricsJson = await metricsResponse.json();
+        const leadsJson = await leadsResponse.json();
+        const tripsJson = await tripsResponse.json();
+
+        if (metricsJson.success) setMetrics(metricsJson.data);
+        if (leadsJson.success) setRecentLeads((leadsJson.data || []).slice(0, 5));
+        if (tripsJson.success) setTrips(tripsJson.data || []);
       } catch (err) {
-        console.error("Failed to load trips:", err);
+        console.error('Failed to load dashboard:', err);
+      } finally {
+        setLoading(false);
       }
     }
-    loadTrips();
+
+    loadDashboard();
   }, []);
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      try {
-        const response = await adminFetch('/api/admin/metrics');
-        if (!response.ok) throw new Error('Failed to fetch metrics');
-        const json = await response.json();
-        if (json.success) setMetrics(json.data);
-      } catch (err) {
-        console.error('Failed to load dashboard metrics:', err);
-      } finally {
-        setLoadingMetrics(false);
-      }
-    }
-    fetchMetrics();
-  }, []);
+  const openTrips = trips.filter((trip) => String(trip.status || 'open').toLowerCase() === 'open').length;
+  const closedTrips = Math.max(trips.length - openTrips, 0);
+  const stageEntries = JOURNEY_STAGES.map((stage) => [stage, metrics?.leadsByStage?.[stage] || 0]);
+  const activeLeadCount = stageEntries
+    .filter(([stage]) => !['CONFIRMED', 'NOT A FIT'].includes(stage))
+    .reduce((total, [, count]) => total + count, 0);
 
-  useEffect(() => {
-    async function fetchLeads() {
-      setLoadingLeads(true);
-      try {
-        const queryParams = new URLSearchParams();
-        if (search.trim()) queryParams.append('search', search.trim());
-        if (statusFilter) queryParams.append('status', statusFilter);
-        if (tripFilter) queryParams.append('trip_id', tripFilter);
-        if (ownerFilter) queryParams.append('owner', ownerFilter);
-
-        const response = await adminFetch(`/api/admin/leads?${queryParams.toString()}`);
-        if (!response.ok) throw new Error('Failed to fetch leads');
-        const json = await response.json();
-        if (json.success && json.data) {
-          setLeads(json.data);
-        } else {
-          setLeads([]);
-        }
-      } catch (err) {
-        console.error('Failed to load leads:', err);
-      } finally {
-        setLoadingLeads(false);
-      }
-    }
-
-    const delayDebounce = setTimeout(() => {
-      fetchLeads();
-    }, 300);
-
-    return () => clearTimeout(delayDebounce);
-  }, [search, statusFilter, tripFilter, ownerFilter]);
-
-  const getStatusBadgeClass = (status) => {
-    const base = 'text-[10px] font-bold tracking-wider px-2.5 py-1 rounded border ';
-    switch (status?.toUpperCase()) {
-      case 'NEW':
-        return `${base} bg-blue-50 border-blue-200 text-blue-700`;
-      case 'CONTACTED':
-        return `${base} bg-amber-50 border-amber-200 text-amber-700`;
-      case 'CONFIRMED':
-        return `${base} bg-emerald-50 border-emerald-200 text-emerald-700`;
-      case 'NOT A FIT':
-        return `${base} bg-red-50 border-red-200 text-red-600`;
-      default:
-        return `${base} bg-stone-50 border-stone-200 text-stone-700`;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="h-20 rounded-3xl border border-[#1C1B1A]/5 bg-white animate-pulse" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="h-32 rounded-3xl border border-[#1C1B1A]/5 bg-white animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-2xl font-light tracking-tight text-[#1C1B1A]">Nomichi CRM Console</h1>
-        <p className="text-[10px] text-[#D55D27] font-semibold uppercase tracking-widest mt-1">Lead pipeline workspace</p>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:p-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#D55D27]">Dashboard</p>
+          <h1 className="mt-2 text-2xl font-light tracking-tight text-[#1C1B1A] sm:text-3xl">
+            Nomichi overview
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm font-light leading-6 text-[#1C1B1A]/55">
+            A calm view of enquiry volume, journey stages, and traveller interest.
+          </p>
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => router.push('/admin/leads')}
+            className="min-h-11 rounded-xl bg-[#D55D27] px-5 text-xs font-semibold uppercase tracking-wider text-[#FFFBF5] transition hover:bg-[#1C1B1A]"
+          >
+            Review Leads
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push('/admin/trips')}
+            className="min-h-11 rounded-xl border border-[#D55D27]/25 bg-[#FFFBF5] px-5 text-xs font-semibold uppercase tracking-wider text-[#D55D27] transition hover:bg-[#D55D27] hover:text-[#FFFBF5]"
+          >
+            Manage Trips
+          </button>
+        </div>
       </div>
 
-      <section className="space-y-4">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-[#1C1B1A]/40">Dashboard overview</h2>
-        {loadingMetrics ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="bg-white h-24 rounded-2xl border border-[#1C1B1A]/5 animate-pulse" />
-            ))}
-          </div>
-        ) : metrics ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm flex flex-col justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Total Enquiries</span>
-              <span className="text-3xl font-light text-[#D55D27] mt-2">{metrics.totalLeads || 0}</span>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40 block">Leads by stage</span>
-              <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto pr-1">
-                {metrics.leadsByStage && Object.entries(metrics.leadsByStage).map(([stage, count]) => (
-                  <div key={stage} className="bg-[#FFFBF5] border border-[#1C1B1A]/5 px-2.5 py-1 rounded-lg flex justify-between items-center text-[11px]">
-                    <span className="font-light truncate uppercase text-[#1C1B1A]/70">{stage}</span>
-                    <span className="font-semibold text-[#1C1B1A]">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40 block">Leads per journey</span>
-              <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1 text-xs">
-                {metrics.leadsPerTrip && metrics.leadsPerTrip.map((trip, idx) => (
-                  <div key={idx} className="flex justify-between items-center border-b border-[#FFFBF5] pb-1">
-                    <span className="text-[#1C1B1A]/80 truncate max-w-[180px] font-light">{trip.tripName}</span>
-                    <span className="text-[#D55D27] font-semibold bg-[#FFFBF5] px-1.5 py-0.5 rounded border border-[#1C1B1A]/5">{trip.count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs text-[#1C1B1A]/40 italic">Metrics are unavailable right now.</p>
-        )}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Total Leads</span>
+          <strong className="mt-3 block text-4xl font-light text-[#D55D27]">{metrics?.totalLeads || 0}</strong>
+        </div>
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Active Leads</span>
+          <strong className="mt-3 block text-4xl font-light text-[#1C1B1A]">{activeLeadCount}</strong>
+        </div>
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Open Trips</span>
+          <strong className="mt-3 block text-4xl font-light text-[#1C1B1A]">{openTrips}</strong>
+        </div>
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/40">Closed Trips</span>
+          <strong className="mt-3 block text-4xl font-light text-[#1C1B1A]">{closedTrips}</strong>
+        </div>
       </section>
 
-      <section className="bg-white p-5 rounded-2xl border border-[#1C1B1A]/5 shadow-sm space-y-4">
-        <div className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="w-full md:flex-1">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Search name, email, or phone</label>
-            <input 
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search leads"
-              className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
-            />
+      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[#1C1B1A]/45">Journey stages</h2>
+            <span className="text-xs font-light text-[#1C1B1A]/45">{metrics?.totalLeads || 0} total</span>
           </div>
-
-          <div className="w-full md:w-56">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Pipeline status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
-            >
-              <option value="">All Allowed Stages</option>
-              {ALLOWED_STAGES.map(stage => (
-                <option key={stage} value={stage}>{stage}</option>
-              ))}
-            </select>
+          <div className="space-y-3">
+            {stageEntries.map(([stage, count]) => {
+              const percentage = metrics?.totalLeads ? Math.round((count / metrics.totalLeads) * 100) : 0;
+              return (
+                <div key={stage} className="grid gap-2 sm:grid-cols-[150px_1fr_44px] sm:items-center">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1C1B1A]/60">{stage}</span>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#F4EFE6]">
+                    <div className="h-full rounded-full bg-[#D55D27]" style={{ width: `${percentage}%` }} />
+                  </div>
+                  <span className="text-right text-xs font-semibold text-[#1C1B1A]">{count}</span>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          <div className="w-full md:w-64">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Journey</label>
-            <select
-              value={tripFilter}
-              onChange={(e) => setTripFilter(e.target.value)}
-              className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
-            >
-              <option value="">All Registered Journeys</option>
-              {trips.map((t) => (
-                  <option key={t.id} value={t.id}>{t.title || t.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="w-full md:w-56">
-            <label className="block text-[10px] font-semibold uppercase tracking-wider mb-2 text-[#1C1B1A]/50">Owner</label>
-            <select
-              value={ownerFilter}
-              onChange={(e) => setOwnerFilter(e.target.value)}
-              className="w-full p-3 border border-[#1C1B1A]/10 rounded-xl text-sm bg-[#FFFBF5] focus:outline-none focus:border-[#D55D27] transition font-light"
-            >
-              <option value="">All owners</option>
-              {AVAILABLE_OWNERS.filter((owner) => owner !== 'Unassigned').map((owner) => (
-                <option key={owner} value={owner}>{owner}</option>
-              ))}
-            </select>
+        <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="mb-5 text-xs font-semibold uppercase tracking-widest text-[#1C1B1A]/45">Leads by trip</h2>
+          <div className="space-y-3">
+            {metrics?.leadsPerTrip?.length ? (
+              metrics.leadsPerTrip.map((trip) => (
+                <div key={trip.tripName} className="flex min-h-11 items-center justify-between gap-4 rounded-2xl bg-[#FFFBF5] px-4 py-3">
+                  <span className="min-w-0 truncate text-sm font-light text-[#1C1B1A]/75">{trip.tripName}</span>
+                  <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#1C1B1A]">{trip.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm font-light text-[#1C1B1A]/45">No trip demand data yet.</p>
+            )}
           </div>
         </div>
       </section>
 
-      <section className="bg-white rounded-2xl border border-[#1C1B1A]/5 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#1C1B1A]/5 flex justify-between items-center">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-[#1C1B1A]/50">Registered Expressions of Interest</h3>
-          <span className="text-xs font-light text-[#1C1B1A]/50">Showing {leads.length} matched records</span>
+      <section className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[#1C1B1A]/45">Recent activity</h2>
+          <button
+            type="button"
+            onClick={() => router.push('/admin/leads')}
+            className="min-h-11 rounded-xl border border-[#D55D27]/20 px-4 text-xs font-semibold uppercase tracking-wider text-[#D55D27] transition hover:bg-[#D55D27] hover:text-[#FFFBF5]"
+          >
+            Open Leads
+          </button>
         </div>
-
-        <div className="overflow-x-auto">
-          {loadingLeads ? (
-            <div className="p-12 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 bg-[#FFFBF5] rounded-xl animate-pulse w-full border border-[#1C1B1A]/5" />
-              ))}
-            </div>
-          ) : leads.length === 0 ? (
-            <div className="p-12 text-center text-xs text-[#1C1B1A]/40 italic">
-              No leads match these filters.
-            </div>
+        <div className="grid gap-3">
+          {recentLeads.length ? (
+            recentLeads.map((lead) => (
+              <button
+                key={lead.id}
+                type="button"
+                onClick={() => router.push(`/admin/leads/${lead.id}`)}
+                className="grid min-h-16 gap-2 rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4 text-left transition hover:border-[#1C1B1A]/30 md:grid-cols-[1fr_auto_auto] md:items-center"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-[#1C1B1A]">{lead.name || 'Anonymous lead'}</span>
+                  <span className="block truncate text-xs font-light text-[#1C1B1A]/45">{lead.email || lead.phone || 'No contact detail'}</span>
+                </span>
+                <span className="text-xs font-light text-[#1C1B1A]/50">{lead.trips?.name || lead.trip_interest || 'General interest'}</span>
+                <span className="w-fit rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]">
+                  {lead.status || 'NEW'}
+                </span>
+              </button>
+            ))
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#FFFBF5] border-b border-[#1C1B1A]/5 text-[10px] font-bold uppercase tracking-wider text-[#1C1B1A]/40">
-                  <th className="py-3 px-6">Candidate Profile</th>
-                  <th className="py-3 px-6">Communication Channels</th>
-                  <th className="py-3 px-6">Lifecycle Phase</th>
-                  <th className="py-3 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#1C1B1A]/5 text-sm">
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-[#FFFBF5]/40 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="font-medium text-[#1C1B1A]">{lead.name}</div>
-                      <span className="text-[10px] text-[#1C1B1A]/50 uppercase tracking-wider font-semibold bg-[#FFFBF5] border border-[#1C1B1A]/5 rounded-md px-1.5 py-0.5 mt-1 inline-block">
-                        {lead.group_type || 'Solo'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="text-xs font-light tracking-wide">{lead.email}</div>
-                      <div className="text-xs text-[#1C1B1A]/40 font-light mt-0.5">{lead.phone}</div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={getStatusBadgeClass(lead.status)}>
-                        {lead.status || 'NEW'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
-                      <button 
-                        onClick={() => router.push(`/admin/leads/${lead.id}`)}
-                        className="text-[11px] font-semibold uppercase tracking-widest text-[#D55D27] hover:text-[#1C1B1A] border border-[#D55D27]/20 hover:border-[#1C1B1A] px-3 py-2 rounded-xl bg-white transition duration-200"
-                      >
-                        Workspace
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <p className="text-sm font-light text-[#1C1B1A]/45">No recent lead activity yet.</p>
           )}
         </div>
       </section>

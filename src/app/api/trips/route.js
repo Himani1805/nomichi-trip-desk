@@ -7,9 +7,6 @@ export async function GET() {
       .from('trips')
       .select('*')
       .eq('status', 'open')
-      .not('name', 'ilike', 'QA%')
-      .not('name', 'ilike', '%audit%')
-      .not('destination', 'ilike', 'QA%')
       .order('created_at', { ascending: false });
 
     if (error) {
