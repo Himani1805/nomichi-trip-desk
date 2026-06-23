@@ -255,9 +255,10 @@ export default function PublicLeadCapturePage() {
           <div className="flex items-center gap-4 sm:gap-8">
             <Link
               href="/admin"
-              className="hidden min-h-11 items-center text-[13px] font-medium tracking-[0.08em] text-[#1C1B1A] transition hover:text-[#D55D27] sm:inline-flex"
+              className="inline-flex min-h-11 items-center text-[13px] font-medium tracking-[0.08em] text-[#1C1B1A] transition hover:text-[#D55D27]"
             >
-              Admin Dashboard
+              <span className="sm:hidden">Admin</span>
+              <span className="hidden sm:inline">Admin Dashboard</span>
             </Link>
             <button
               type="button"

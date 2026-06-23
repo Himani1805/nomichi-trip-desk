@@ -24,11 +24,12 @@ export default function EnquiryForm({
     <section
       id="enquiry"
       ref={enquiryRef}
-      className="scroll-mt-24 bg-[#FFFBF5] pt-12 pb-24 w-full font-poppins md:pt-16 md:pb-28"
+      className="scroll-mt-24 bg-[#FFFBF5] pt-8 pb-16 w-full font-poppins sm:pt-12 sm:pb-24 md:pt-16 md:pb-28"
     >
-      <div className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-12 ">
-        <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20 items-start">
-          <div className="lg:sticky lg:top-32">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-10 lg:px-12">
+        <div className={`grid gap-8 sm:gap-10 items-start ${success ? "lg:grid-cols-1" : "lg:grid-cols-[0.8fr_1.2fr] lg:gap-20"}`}>
+          {!success ? (
+            <div className="lg:sticky lg:top-32">
             <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D55D27]">
               Send an Enquiry
             </p>
@@ -40,7 +41,7 @@ export default function EnquiryForm({
               This is not an automated booking flow. Your note helps our team
               understand the trip, pace, and group style that would suit you.
             </p>
-            <div className="mt-10 grid max-w-md gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="mt-6 grid max-w-md gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4 lg:grid-cols-1">
               {[
                 [
                   "01",
@@ -73,12 +74,13 @@ export default function EnquiryForm({
               ))}
             </div>
           </div>
+          ) : null}
 
-          <div className="rounded-[28px] border border-[#D1B788]/25 bg-[#F4EFE6] p-6 sm:p-10 shadow-[0_24px_68px_-20px_rgba(28,27,26,0.05)] font-poppins">
+          <div className="rounded-[28px] border border-[#D1B788]/25 bg-[#F4EFE6] p-5 sm:p-8 md:p-10 shadow-[0_24px_68px_-20px_rgba(28,27,26,0.05)] font-poppins">
             {success ? (
               <ConfirmationState />
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
                 {formError ? (
                   <div className="rounded-xl border border-[#D55D27]/20 bg-white/80 p-4 text-xs font-medium text-[#D55D27]">
                     {formError}
