@@ -14,20 +14,16 @@ export async function GET(request, { params }) {
     const { id } = await params;
     const { data, error } = await supabase
       .from('enquiries')
-      .select(`
-        *,
-        trips (
-          name,
-          destination,
-          location,
-          description
-        )
-      `)
+      .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 404 });
+    }
+
+    if (!data) {
+      return NextResponse.json({ success: false, error: 'Lead not found' }, { status: 404 });
     }
 
     return NextResponse.json({

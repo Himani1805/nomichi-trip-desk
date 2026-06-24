@@ -20,6 +20,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [ownerUpdating, setOwnerUpdating] = useState(false);
   
@@ -33,17 +34,39 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
   useEffect(() => {
     async function fetchLeadData() {
+      setLoading(true);
+      setLoadError('');
+
       try {
         const leadRes = await adminFetch(`/api/admin/leads/${id}`);
         const leadResult = await leadRes.json();
-        if (leadResult.success) setLead(leadResult.data);
+
+        let resolvedLead = null;
+
+        if (leadRes.ok && leadResult.success && leadResult.data) {
+          resolvedLead = leadResult.data;
+        } else {
+          const fallbackRes = await adminFetch('/api/admin/leads');
+          const fallbackResult = await fallbackRes.json();
+
+          if (fallbackRes.ok && fallbackResult.success) {
+            resolvedLead = (fallbackResult.data || []).find(
+              (item) => String(item.id) === String(id),
+            );
+          }
+        }
+
+        setLead(resolvedLead || null);
+        if (!resolvedLead) {
+          setLoadError(leadResult.error || 'Lead could not be loaded.');
+        }
 
         const notesRes = await adminFetch(`/api/admin/leads/${id}/notes`);
         const notesResult = await notesRes.json();
         if (notesResult.success) setNotes(notesResult.data || []);
-        
       } catch (err) {
         console.error('Error loading lead data:', err);
+        setLoadError('Could not load traveller profile.');
       } finally {
         setLoading(false);
       }
@@ -133,7 +156,14 @@ export default function LeadDetailPage({ params: paramsPromise }) {
   };
 
   if (loading) return <div className="text-sm font-light">Loading traveller profile...</div>;
-  if (!lead) return <div className="text-sm text-[#1C1B1A]">Lead not found.</div>;
+  if (!lead) {
+    return (
+      <div className="rounded-3xl border border-[#1C1B1A]/5 bg-white p-6 text-sm text-[#1C1B1A] shadow-sm">
+        <p className="font-medium">Lead not found.</p>
+        {loadError ? <p className="mt-2 text-[#1C1B1A]/60">{loadError}</p> : null}
+      </div>
+    );
+  }
 
   const submittedAt = lead.created_at ? new Date(lead.created_at).toLocaleString() : 'Not available';
   const selectedJourney = lead.trips?.name || lead.trip_interest || 'General interest';
