@@ -86,7 +86,7 @@ export default function FloatingActions() {
     <div
       className={`fixed right-4 z-40 flex flex-col items-center gap-3 transition-[bottom] duration-300 sm:right-6 ${
         nearFooter
-          ? "bottom-[calc(env(safe-area-inset-bottom)+6.5rem)]"
+          ? "bottom-[calc(env(safe-area-inset-bottom)+2.75rem)]"
           : "bottom-[calc(env(safe-area-inset-bottom)+1.25rem)]"
       }`}
     >
