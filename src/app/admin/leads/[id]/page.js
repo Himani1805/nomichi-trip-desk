@@ -181,8 +181,8 @@ export default function LeadDetailPage({ params: paramsPromise }) {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
+        <div className="min-w-0 xl:col-span-2 space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-[#1C1B1A]/5 bg-white p-6 space-y-6">
             <div>
               <h1 className="text-2xl font-light tracking-tight">{lead.name || 'Traveller'}</h1>
               <p className="text-sm text-[#1C1B1A]/50 font-light mt-1">{lead.email || 'No email shared'}</p>
@@ -214,13 +214,13 @@ export default function LeadDetailPage({ params: paramsPromise }) {
                 <span className="font-light">{submittedAt}</span>
               </div>
             </div>
-            <div className="rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4">
-              <span className="block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40 mb-2">What they are hoping this trip feels like</span>
-              <p className="text-sm font-light leading-relaxed text-[#1C1B1A]/75 whitespace-pre-wrap">{travellerNote}</p>
+            <div className="overflow-hidden rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4">
+              <span className="mb-2 block text-[10px] uppercase tracking-wider text-[#1C1B1A]/40">What they are hoping this trip feels like</span>
+              <p className="break-words text-sm font-light leading-relaxed text-[#1C1B1A]/75 whitespace-pre-wrap">{travellerNote}</p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-[#1C1B1A]/5 bg-white p-6 space-y-6">
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A]">Notes and call history</h3>
             
             <form onSubmit={handleAddNote} className="space-y-3">
@@ -247,10 +247,10 @@ export default function LeadDetailPage({ params: paramsPromise }) {
               {notes.length === 0 ? (
                 <p className="text-xs text-[#1C1B1A]/40 font-light italic">No notes added yet.</p>
               ) : (
-                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
                   {notes.map((note) => (
-                    <div key={note.id} className="bg-[#FFFBF5] border border-[#1C1B1A]/5 rounded-xl p-4 text-xs">
-                      <p className="font-light text-[#1C1B1A]/80 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                    <div key={note.id} className="overflow-hidden rounded-xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4 text-xs">
+                      <p className="break-words font-light leading-relaxed text-[#1C1B1A]/80 whitespace-pre-wrap">{note.content}</p>
                       <span className="block text-[9px] text-[#1C1B1A]/40 mt-2">
                         {new Date(note.created_at).toLocaleString()}
                       </span>
@@ -262,7 +262,7 @@ export default function LeadDetailPage({ params: paramsPromise }) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#1C1B1A]/5 p-6 space-y-6">
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-[#1C1B1A]/5 bg-white p-6 space-y-6">
           <div>
             <h3 className="text-xs uppercase tracking-widest font-semibold text-[#1C1B1A] mb-3">Journey Stage</h3>
             <div className="relative">
@@ -327,12 +327,12 @@ export default function LeadDetailPage({ params: paramsPromise }) {
               </p>
             )}
             {vibeCheck && (
-              <div className="rounded-xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4 text-xs leading-relaxed text-[#1C1B1A]/75">
+              <div className="break-words rounded-xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4 text-xs leading-relaxed text-[#1C1B1A]/75">
                 {vibeCheck}
               </div>
             )}
             {whatsappDraft && (
-              <div className="rounded-xl bg-[#1C1B1A] p-4 text-xs leading-relaxed text-[#FFFBF5] whitespace-pre-wrap">
+              <div className="break-words rounded-xl bg-[#1C1B1A] p-4 text-xs leading-relaxed text-[#FFFBF5] whitespace-pre-wrap">
                 {whatsappDraft}
               </div>
             )}

@@ -225,64 +225,64 @@ export default function LeadsPage() {
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">
-              <table className="w-full min-w-[920px] border-collapse text-left">
+              <table className="w-full min-w-[760px] border-collapse text-left">
                 <thead>
                   <tr className="bg-[#FFFBF5] text-[10px] font-bold uppercase tracking-wider text-[#1C1B1A]/40">
-                    <th className="px-5 py-3">Traveller</th>
-                    <th className="px-5 py-3">Contact</th>
-                    <th className="px-5 py-3">Journey</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3">Owner</th>
-                    <th className="px-5 py-3 text-right">Open</th>
+                    <th className="px-3 py-3">Traveller</th>
+                    <th className="px-3 py-3">Contact</th>
+                    <th className="px-3 py-3">Journey</th>
+                    <th className="w-[132px] px-3 py-3">Status</th>
+                    <th className="w-[150px] px-3 py-3">Owner</th>
+                    <th className="w-[92px] px-3 py-3 text-right">Open</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1C1B1A]/5 text-sm">
                   {leads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-[#FFFBF5]/55">
-                      <td className="px-5 py-4">
+                      <td className="min-w-[150px] px-3 py-4">
                         <span className="block font-medium text-[#1C1B1A]">{lead.name || 'Anonymous lead'}</span>
                         <span className="mt-1 inline-flex rounded-full bg-[#F4EFE6] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#1C1B1A]/45">
                           {lead.group_type || 'Solo'}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="min-w-[170px] px-3 py-4">
                         <span className="block text-xs font-light text-[#1C1B1A]/75">{lead.email || 'No email'}</span>
                         <span className="block text-xs font-light text-[#1C1B1A]/45">{lead.phone || 'No phone'}</span>
                       </td>
-                      <td className="max-w-[210px] px-5 py-4 text-xs font-light text-[#1C1B1A]/60">
+                      <td className="max-w-[190px] px-3 py-4 text-xs font-light text-[#1C1B1A]/60">
                         <span className="block truncate">{lead.trips?.name || lead.trip_interest || 'General interest'}</span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="w-[132px] px-3 py-4">
                         <select
                           aria-label={`Update status for ${lead.name || 'traveller'}`}
                           value={lead.status || 'NEW'}
                           disabled={updatingId === lead.id}
                           onChange={(e) => updateLead(lead.id, { status: e.target.value })}
-                          className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-3 text-xs font-medium outline-none focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
+                          className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-2 text-[11px] font-medium outline-none focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
                         >
                           {ALLOWED_STAGES.map((stage) => (
                             <option key={stage} value={stage}>{stage}</option>
                           ))}
                         </select>
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="w-[150px] px-3 py-4">
                         <select
                           aria-label={`Assign curator for ${lead.name || 'traveller'}`}
                           value={lead.assigned_owner || 'Unassigned'}
                           disabled={updatingId === lead.id}
                           onChange={(e) => updateLead(lead.id, { owner: e.target.value === 'Unassigned' ? null : e.target.value })}
-                          className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-3 text-xs font-medium outline-none focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
+                          className="min-h-11 w-full rounded-xl border border-[#1C1B1A]/10 bg-[#FFFBF5] px-2 text-[11px] font-medium outline-none focus:border-[#D55D27] focus:ring-4 focus:ring-[#D55D27]/5"
                         >
                           {AVAILABLE_OWNERS.map((owner) => (
                             <option key={owner} value={owner}>{owner}</option>
                           ))}
                         </select>
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="w-[92px] px-3 py-4 text-right">
                         <button
                           type="button"
                           onClick={() => router.push(`/admin/leads/${lead.id}`)}
-                          className="min-h-11 rounded-xl border border-[#D55D27]/25 px-4 text-[11px] font-semibold uppercase tracking-wider text-[#D55D27] transition hover:bg-[#D55D27] hover:text-[#FFFBF5]"
+                          className="min-h-11 whitespace-nowrap rounded-xl border border-[#D55D27]/25 px-3 text-[10px] font-semibold uppercase tracking-wider text-[#D55D27] transition hover:bg-[#D55D27] hover:text-[#FFFBF5]"
                         >
                           Profile
                         </button>
@@ -295,15 +295,15 @@ export default function LeadsPage() {
 
             <div className="grid gap-4 p-4 lg:hidden">
               {leads.map((lead) => (
-                <article key={lead.id} className="rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <article key={lead.id} className="overflow-hidden rounded-2xl border border-[#1C1B1A]/5 bg-[#FFFBF5] p-4">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <h3 className="truncate text-base font-medium text-[#1C1B1A]">{lead.name || 'Anonymous lead'}</h3>
                       <p className="mt-1 truncate text-sm font-light text-[#1C1B1A]/55">{lead.email || lead.phone || 'No contact detail'}</p>
                     </div>
-                    <span className={statusClass(lead.status || 'NEW')}>{lead.status || 'NEW'}</span>
+                    <span className={`${statusClass(lead.status || 'NEW')} shrink-0`}>{lead.status || 'NEW'}</span>
                   </div>
-                  <p className="mt-3 text-sm font-light text-[#1C1B1A]/60">
+                  <p className="mt-3 break-words text-sm font-light text-[#1C1B1A]/60">
                     {lead.trips?.name || lead.trip_interest || 'General interest'}
                   </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
